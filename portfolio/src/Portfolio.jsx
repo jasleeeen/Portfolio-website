@@ -798,6 +798,29 @@ function Typewriter({ words = ROTATING }) {
 }
 
 /* ------------------------------------------------------------------ */
+/* lamp header — CSS recreation of the Aceternity lamp, theme accents  */
+/* ------------------------------------------------------------------ */
+
+function LampTitle({ eyebrow, children }) {
+  const [ref, shown] = useReveal();
+  return (
+    <div ref={ref} className={`lamp ${shown ? "is-lit" : ""}`}>
+      <div className="lamp-stage" aria-hidden="true">
+        <div className="lamp-halo" />
+        <div className="lamp-cone lamp-cone-l" />
+        <div className="lamp-cone lamp-cone-r" />
+        <div className="lamp-spark" />
+        <div className="lamp-line" />
+      </div>
+      <div className="lamp-copy">
+        <span className="mono eyebrow">{eyebrow}</span>
+        <h2 className="section-title">{children}</h2>
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /* sections                                                            */
 /* ------------------------------------------------------------------ */
 
@@ -1164,10 +1187,7 @@ export default function Portfolio() {
 
         {/* ---------------- skills ---------------- */}
         <section className="section" id="skills">
-          <Reveal>
-            <span className="mono eyebrow">Toolkit</span>
-            <h2 className="section-title">What I reach for</h2>
-          </Reveal>
+          <LampTitle eyebrow="Toolkit">What I reach for</LampTitle>
           <div className="skills">
             {SKILLS.map((s, i) => (
               <Reveal as="div" key={s.group} className="panel skill-group" delay={i * 60}>
@@ -1191,8 +1211,12 @@ export default function Portfolio() {
             <h2 className="section-title">Certifications</h2>
           </Reveal>
           <Reveal className="panel certs">
-            {CERTS.map(([name, org, year]) => (
-              <div key={name} className="cert">
+            {CERTS.map(([name, org, year], i) => (
+              <div key={name} className="cert" style={{ "--cd": `${i * 170}ms` }}>
+                <svg viewBox="0 0 32 32" className="cert-seal" aria-hidden="true">
+                  <circle cx="16" cy="16" r="13" className="seal-ring" />
+                  <path d="M 10.5 16.5 L 14.5 20.5 L 22 12" className="seal-check" />
+                </svg>
                 <span className="cert-name">{name}</span>
                 <span className="cert-org">{org}</span>
                 <span className="mono cert-year">{year}</span>
@@ -1691,6 +1715,70 @@ html, body { margin: 0; padding: 0; background: #08080b; }
   transition: transform 900ms cubic-bezier(0.16,1,0.3,1) 180ms;
 }
 .reveal.is-in .section-title::after { transform: scaleX(1); }
+
+/* ---- lamp header ---- */
+.lamp {
+  --lamp-w: min(480px, 78vw);
+  --cone-w: min(260px, 38vw);
+  position: relative; display: flex; flex-direction: column; align-items: center;
+  text-align: center; margin-bottom: 24px;
+}
+.lamp-stage { position: relative; width: 100%; height: 150px; pointer-events: none; }
+.lamp-stage > * { position: absolute; left: 50%; }
+/* wide soft ambience above the line */
+.lamp-halo {
+  top: 26px; width: 300px; height: 130px; margin-left: -150px; border-radius: 999px;
+  background: var(--accent); filter: blur(56px);
+  opacity: 0; transition: opacity 1000ms ease 150ms;
+}
+.lamp.is-lit .lamp-halo { opacity: 0.32; }
+/* the light cones fanning down from the line */
+.lamp-cone {
+  top: 92px; width: var(--cone-w); height: 170px;
+  opacity: 0; transform: scaleY(0.55); transform-origin: center top;
+  transition: opacity 900ms ease 120ms, transform 1100ms cubic-bezier(0.16,1,0.3,1) 120ms;
+}
+.lamp-cone-l {
+  margin-left: calc(-1 * var(--cone-w));
+  background: conic-gradient(from 180deg at 100% 0%, color-mix(in srgb, var(--accent) 55%, transparent) 0deg, transparent 62deg);
+  -webkit-mask-image: radial-gradient(130% 130% at 100% 0%, #000 28%, transparent 76%);
+  mask-image: radial-gradient(130% 130% at 100% 0%, #000 28%, transparent 76%);
+}
+.lamp-cone-r {
+  background: conic-gradient(from 90deg at 0% 0%, transparent 28deg, color-mix(in srgb, var(--accent) 55%, transparent) 90deg);
+  -webkit-mask-image: radial-gradient(130% 130% at 0% 0%, #000 28%, transparent 76%);
+  mask-image: radial-gradient(130% 130% at 0% 0%, #000 28%, transparent 76%);
+}
+.lamp.is-lit .lamp-cone { opacity: 0.75; transform: scaleY(1); }
+/* hot core just under the line */
+.lamp-spark {
+  top: 72px; width: 230px; height: 56px; margin-left: -115px; border-radius: 999px;
+  background: var(--accent-2); filter: blur(26px);
+  opacity: 0; transition: opacity 900ms ease 200ms;
+}
+.lamp.is-lit .lamp-spark { opacity: 0.45; }
+/* the lamp tube itself — expands when lit */
+.lamp-line {
+  top: 90px; height: 2px; width: var(--lamp-w); margin-left: calc(var(--lamp-w) / -2);
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, var(--accent-2) 22%, var(--accent) 50%, var(--accent-2) 78%, transparent);
+  box-shadow: 0 0 18px var(--accent-2), 0 0 44px color-mix(in srgb, var(--accent) 55%, transparent);
+  opacity: 0.35; transform: scaleX(0.4);
+  transition: opacity 900ms ease, transform 1100ms cubic-bezier(0.16,1,0.3,1);
+}
+.lamp.is-lit .lamp-line { opacity: 1; transform: scaleX(1); }
+/* title rises into the light */
+.lamp-copy {
+  position: relative; z-index: 1; margin-top: -34px;
+  opacity: 0; transform: translateY(26px);
+  transition: opacity 800ms ease 260ms, transform 900ms cubic-bezier(0.16,1,0.3,1) 260ms;
+}
+.lamp.is-lit .lamp-copy { opacity: 1; transform: none; }
+.lamp .section-title { margin-bottom: 0; }
+.lamp .section-title::after { display: none; }
+.theme-light .lamp-halo { filter: blur(64px); }
+.theme-light .lamp.is-lit .lamp-halo { opacity: 0.2; }
+.theme-light .lamp.is-lit .lamp-spark { opacity: 0.3; }
 .reveal { opacity: 0; transform: translateY(42px) scale(0.975); transition: opacity 800ms cubic-bezier(0.16,1,0.3,1), transform 800ms cubic-bezier(0.16,1,0.3,1); }
 .reveal.is-in { opacity: 1; transform: none; }
 
@@ -1790,15 +1878,44 @@ html, body { margin: 0; padding: 0; background: #08080b; }
 .skills { display: grid; gap: 16px; }
 @media (min-width: 720px) { .skills { grid-template-columns: 1fr 1fr; } }
 .skill-group { padding: 22px; }
-.skill-title { font-size: 10.5px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); font-weight: 400; margin: 0 0 14px; }
+.skill-group .chip { font-weight: 600; color: var(--fg); }
+.skill-title { font-size: 10.5px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); font-weight: 500; margin: 0 0 14px; }
 
 /* ---- certs ---- */
 .certs { padding: 8px 22px; }
-.cert { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; padding: 18px 0; border-bottom: 1px solid var(--line); }
+.cert {
+  position: relative; overflow: hidden;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px;
+  padding: 18px 0; border-bottom: 1px solid var(--line);
+  opacity: 0; transform: translateX(-18px);
+  transition: opacity 600ms ease var(--cd, 0ms), transform 700ms cubic-bezier(0.16,1,0.3,1) var(--cd, 0ms);
+}
+.reveal.is-in .cert { opacity: 1; transform: none; }
 .cert:last-child { border-bottom: 0; }
-.cert-name { font-size: 0.98rem; }
+.cert-name { font-size: 0.98rem; transition: color 250ms ease; }
+.cert:hover .cert-name { color: var(--accent); }
 .cert-org { color: var(--muted); font-size: 0.85rem; flex: 1; }
 .cert-year { color: var(--muted); font-size: 11px; }
+/* verified seal: ring draws, then the check strokes in */
+.cert-seal { width: 22px; height: 22px; flex: none; }
+.seal-ring {
+  fill: none; stroke: color-mix(in srgb, var(--accent) 65%, transparent); stroke-width: 2;
+  stroke-dasharray: 82; stroke-dashoffset: 82; transform: rotate(-90deg); transform-origin: center;
+}
+.seal-check {
+  fill: none; stroke: var(--accent-2); stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round;
+  stroke-dasharray: 20; stroke-dashoffset: 20;
+}
+.reveal.is-in .seal-ring { animation: sealDraw 700ms ease forwards; animation-delay: calc(var(--cd, 0ms) + 200ms); }
+.reveal.is-in .seal-check { animation: sealDraw 420ms ease forwards; animation-delay: calc(var(--cd, 0ms) + 780ms); }
+@keyframes sealDraw { to { stroke-dashoffset: 0; } }
+/* shine sweep on hover */
+.cert::after {
+  content: ""; position: absolute; top: 0; bottom: 0; left: -60%; width: 40%;
+  background: linear-gradient(100deg, transparent, color-mix(in srgb, var(--accent) 16%, transparent), transparent);
+  transform: skewX(-18deg); pointer-events: none; transition: left 650ms ease;
+}
+.cert:hover::after { left: 120%; }
 
 /* ---- contact ---- */
 .contact { display: grid; gap: 48px; align-items: start; }
@@ -2010,6 +2127,8 @@ html, body { margin: 0; padding: 0; background: #08080b; }
   .shiny-cta::before, .shiny-cta::after { display: none; }
   /* keep scroll-reactive layers still; the progress rail may still track */
   .blobs { transform: none !important; }
+  .cert { opacity: 1; transform: none; }
+  .seal-ring, .seal-check { stroke-dashoffset: 0 !important; }
   .section-title::after { transform: scaleX(1); }
 }
 `;
