@@ -1131,13 +1131,7 @@ const CSS = `
 .mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
 
 /* ---- ambient blobs ---- */
-.blobs {
-  position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden;
-  /* whole atmosphere drifts up and swells as the page scrolls */
-  transform: translate3d(0, calc(var(--sp, 0) * -14vh), 0) scale(calc(1 + var(--sp, 0) * 0.22));
-  transition: transform 150ms linear;
-  will-change: transform;
-}
+.blobs { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
 .blob {
   position: absolute; border-radius: 999px; display: block;
   filter: blur(110px);
