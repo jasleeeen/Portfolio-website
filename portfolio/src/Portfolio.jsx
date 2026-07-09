@@ -825,7 +825,7 @@ function LampTitle({ eyebrow, children }) {
 /* ------------------------------------------------------------------ */
 
 const NAV = [
-  ["Work", "projects"],
+  ["Projects", "projects"],
   ["Experience", "experience"],
   ["Skills", "skills"],
   ["Contact", "contact"],
