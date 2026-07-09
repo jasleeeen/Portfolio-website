@@ -20,7 +20,7 @@ const LINKS = {
   github: "https://github.com/jasleeeen",
   linkedin: "https://linkedin.com/in/jasleen-kaur-sohal-286117271",
   email: "mailto:jasleen7904@gmail.com",
-  resume: "#", // drop the PDF path here
+  resume: "/resume.pdf", // put your PDF at portfolio/public/resume.pdf
 };
 
 // Add `liveUrl` when a project is deployed. Until then the button
@@ -35,18 +35,18 @@ const PROJECTS = [
     tech: ["TensorFlow", "Keras", "CNNs", "Transfer Learning", "OpenCV"],
     repo: "https://github.com/jasleeeen/Diabetic-Retinopathy-Detection",
     liveUrl: undefined,
-    visual: "retina",
+    visual: "eyecnn",
   },
   {
     title: "Video → 3D Reconstruction Pipeline",
     badge: "Current work",
     blurb:
       "End-to-end pipeline at Auriga IT: sharpness-curated frame extraction, promptable video object segmentation with cross-frame mask propagation, transformer-based multi-view metric reconstruction.",
-    metric: "COLMAP → Gaussian splats",
+    metric: "SAM2 · MapAnything",
     tech: ["PyTorch", "Segmentation", "Transformers", "FastAPI"],
     repo: undefined,
     liveUrl: undefined,
-    visual: "cloud",
+    visual: "mesh",
   },
   {
     title: "Driver Drowsiness Detection",
@@ -67,7 +67,7 @@ const PROJECTS = [
     tech: ["FastAPI", "SQLAlchemy", "PostgreSQL", "Pytest"],
     repo: undefined,
     liveUrl: undefined,
-    visual: "graph",
+    visual: "clinic",
   },
   {
     title: "Cross-Modal Learning",
@@ -77,7 +77,7 @@ const PROJECTS = [
     tech: ["Hugging Face", "Transformers", "NLP", "Embeddings"],
     repo: undefined,
     liveUrl: undefined,
-    visual: "tokens",
+    visual: "xmodal",
   },
   {
     title: "E-Commerce Platform",
@@ -87,7 +87,7 @@ const PROJECTS = [
     tech: ["C#", "ASP.NET MVC", "Web API", "SQL Server"],
     repo: "https://github.com/jasleeeen/ECommerce",
     liveUrl: undefined,
-    visual: "loss",
+    visual: "cart",
   },
 ];
 
@@ -97,8 +97,9 @@ const EXPERIENCE = [
     org: "Auriga IT Consulting, Jaipur",
     when: "Jun 2026 — Present",
     points: [
-      "Built an end-to-end video-to-3D reconstruction pipeline: automated frame extraction with sharpness-based curation, promptable video object segmentation with cross-frame mask propagation, and transformer-based multi-view metric 3D reconstruction.",
-      "Wrote Python RESTful APIs with FastAPI and SQLAlchemy covering data preprocessing and model integration.",
+      "Built an end-to-end video-to-3D reconstruction pipeline: automated frame extraction with sharpness-based curation, promptable video object segmentation with cross-frame mask propagation, and transformer-based multi-view metric reconstruction — turning ordinary handheld video into a usable 3D representation.",
+      "Traced and worked around real-world failure modes along the way — noisy mask edges, low-parallax shots, and moving objects — to keep reconstructions stable across messy, varied footage.",
+      "Wrote Python RESTful APIs with FastAPI and SQLAlchemy to serve the pipeline end to end, covering data preprocessing, model integration, and the request/response layer around each stage.",
     ],
   },
   {
@@ -106,15 +107,17 @@ const EXPERIENCE = [
     org: "Capgemini Exceller Edge Fellowship",
     when: "Jan — May 2026",
     points: [
-      "Built REST APIs with JWT authentication over SQL Server, with hands-on exposure to Azure cloud services.",
+      "Built REST APIs with JWT-secured endpoints over SQL Server, with hands-on exposure to Microsoft Azure cloud services.",
+      "Shipped a full-stack e-commerce platform as the capstone — ASP.NET MVC with secure authentication and a Razorpay payment gateway backed by SQL Server.",
     ],
   },
   {
-    role: "Forward Program",
-    org: "McKinsey.org",
-    when: "Apr — Jun 2026",
+    role: "Python with Data Science — Trainee",
+    org: "Auribises Technologies, Ludhiana",
+    when: "Jun — Jul 2024",
     points: [
-      "Structured problem-solving and stakeholder communication through real consulting case studies.",
+      "Worked hands-on with Python for data cleaning, preprocessing, and exploratory data analysis on real datasets.",
+      "Implemented backend logic for application features, connecting the data work to a functioning app.",
     ],
   },
 ];
@@ -165,8 +168,8 @@ const SKILLS = [
 const CERTS = [
   ["Deep Learning", "IIT Kharagpur · NPTEL", "2025"],
   ["Introduction to Machine Learning", "IIT Kharagpur · NPTEL", "2024"],
-  ["Complete ML & Data Science", "GeeksforGeeks", "2026"],
-  ["Python for Data Science, AI & Development", "Coursera", "2024"],
+  ["Complete Machine Learning & Data Science", "GeeksforGeeks", "2026"],
+  ["Python for Data Science, AI, and Development", "Coursera", "2024"],
 ];
 
 const CONTACT_CARDS = [
@@ -176,14 +179,14 @@ const CONTACT_CARDS = [
   { label: "Résumé", sub: "One page, PDF", href: LINKS.resume, Icon: FileDown },
 ];
 
-const ROTATING = ["Computer Vision", "3D Reconstruction", "Multimodal AI", "Agentic AI"];
+const ROTATING = ["Machine Learning", "Deep Learning", "Computer Vision", "3D Reconstruction", "Exploring Agentic AI"];
 
 // About-section rotator — a live "what I'm on right now" line.
 const CURRENTLY = [
-  "building video→3D at Auriga IT",
-  "reading: 3D Gaussian splatting",
-  "exploring: LangGraph agents",
-  "shipping: FastAPI + RAG services",
+  "building: Video→3D Reconstruction",
+  "exploring: Agentic AI",
+  "building: Freelance Projects",
+  "shipping: FastAPI Backends",
 ];
 
 /* ------------------------------------------------------------------ */
@@ -517,6 +520,143 @@ function LossCurve() {
   );
 }
 
+/* --- project-card visuals v2 --- */
+
+// retinopathy: fundus in → conv layers → grade bar filling to 94.2%
+function EyeCNN() {
+  return (
+    <svg viewBox="0 0 220 160" className="viz">
+      <defs>
+        <radialGradient id="fundus2" cx="42%" cy="40%">
+          <stop offset="0%" stopColor="var(--accent-warm)" stopOpacity="0.5" />
+          <stop offset="100%" stopColor="var(--accent)" stopOpacity="0.08" />
+        </radialGradient>
+      </defs>
+      <circle cx="44" cy="80" r="26" fill="url(#fundus2)" />
+      <circle cx="44" cy="80" r="26" className="eye-ring" />
+      <path d="M 36 72 Q 28 88 40 100" className="vessel" />
+      <path d="M 50 68 Q 62 82 54 98" className="vessel" />
+      <circle cx="52" cy="88" r="2.6" className="lesion" />
+      <rect x="92" y="52" width="11" height="56" rx="3" className="cnn-layer" />
+      <rect x="112" y="60" width="11" height="40" rx="3" className="cnn-layer" style={{ animationDelay: "0.3s" }} />
+      <rect x="132" y="68" width="11" height="24" rx="3" className="cnn-layer" style={{ animationDelay: "0.6s" }} />
+      {[0, 0.75, 1.5].map((d) => (
+        <circle key={d} cx="74" cy="80" r="2.6" className="flow-dot" style={{ "--fx": "82px", animationDelay: `${d}s` }} />
+      ))}
+      <rect x="168" y="50" width="14" height="60" rx="4" className="grade-track" />
+      <rect x="171" y="53" width="8" height="54" rx="3" className="grade-fill" />
+      <text x="150" y="132" className="mono-tick">acc 94.2%</text>
+      <text x="22" y="132" className="mono-tick">fundus in</text>
+    </svg>
+  );
+}
+
+// video→3D: filmstrip frames flowing into a wireframe metric mesh
+function FramesToMesh() {
+  const edges = [
+    "M 128 62 L 176 62", "M 176 62 L 176 110", "M 176 110 L 128 110", "M 128 110 L 128 62",
+    "M 146 46 L 194 46", "M 194 46 L 194 94", "M 194 94 L 146 94", "M 146 94 L 146 46",
+    "M 128 62 L 146 46", "M 176 62 L 194 46", "M 176 110 L 194 94", "M 128 110 L 146 94",
+  ];
+  const verts = [
+    [128, 62], [176, 62], [176, 110], [128, 110],
+    [146, 46], [194, 46], [194, 94], [146, 94],
+  ];
+  return (
+    <svg viewBox="0 0 220 160" className="viz">
+      <g className="film">
+        <rect x="34" y="66" width="46" height="34" rx="4" className="film-frame f3" />
+        <rect x="27" y="59" width="46" height="34" rx="4" className="film-frame f2" />
+        <rect x="20" y="52" width="46" height="34" rx="4" className="film-frame" />
+        <path d="M 38 61 L 38 77 L 51 69 Z" className="film-play" />
+      </g>
+      {[0, 0.75, 1.5].map((d) => (
+        <circle key={d} cx="86" cy="80" r="2.6" className="flow-dot" style={{ "--fx": "34px", animationDelay: `${d}s` }} />
+      ))}
+      {edges.map((d, i) => (
+        <path key={d} d={d} className="mesh-edge" style={{ animationDelay: `${i * 0.12}s` }} />
+      ))}
+      {verts.map(([x, y], i) => (
+        <circle key={i} cx={x} cy={y} r="2.8" className="net-node" style={{ animationDelay: `${(i % 5) * 0.3}s` }} />
+      ))}
+      <text x="20" y="128" className="mono-tick">frames</text>
+      <text x="142" y="140" className="mono-tick">metric mesh</text>
+    </svg>
+  );
+}
+
+// clinic: doctor with stethoscope, med cross, live ECG trace
+function ClinicVisit() {
+  return (
+    <svg viewBox="0 0 220 160" className="viz">
+      <circle cx="62" cy="52" r="15" className="doc-line" />
+      <path d="M 32 106 Q 62 76 92 106" className="doc-line" />
+      <path d="M 52 66 Q 50 88 62 92 Q 74 88 72 66" className="steth" />
+      <line x1="62" y1="92" x2="62" y2="100" className="steth" />
+      <circle cx="62" cy="105" r="5" className="steth-chest" />
+      <g className="cross-pulse">
+        <rect x="152" y="30" width="32" height="32" rx="9" className="cross-card" />
+        <path d="M 168 38 L 168 54 M 160 46 L 176 46" className="cross-mark" />
+      </g>
+      <polyline points="108,112 128,112 136,96 146,126 156,104 162,112 196,112" className="ecg" />
+      <text x="108" y="140" className="mono-tick">appointments · rx · otp</text>
+    </svg>
+  );
+}
+
+// cross-modal: image panel ⇄ text panel with dots looping both ways
+function CrossModalLoop() {
+  return (
+    <svg viewBox="0 0 220 160" className="viz">
+      <g>
+        <rect x="18" y="50" width="66" height="56" rx="10" className="xm-panel xm-glow-a" />
+        <circle cx="38" cy="66" r="5.5" className="xm-sun" />
+        <path d="M 24 98 L 44 74 L 56 88 L 64 78 L 78 98" className="xm-mtn" />
+      </g>
+      <g>
+        <rect x="136" y="50" width="66" height="56" rx="10" className="xm-panel xm-glow-b" />
+        <rect x="146" y="62" width="46" height="5" rx="2.5" className="xm-line" />
+        <rect x="146" y="74" width="34" height="5" rx="2.5" className="xm-line" style={{ animationDelay: "0.25s" }} />
+        <rect x="146" y="86" width="42" height="5" rx="2.5" className="xm-line" style={{ animationDelay: "0.5s" }} />
+      </g>
+      <path d="M 88 58 C 100 42, 120 42, 132 58" className="xm-arc" />
+      <path d="M 132 100 C 120 116, 100 116, 88 100" className="xm-arc" />
+      <circle cx="88" cy="54" r="3" className="xm-dot-go" />
+      <circle cx="132" cy="102" r="3" className="xm-dot-back" />
+      <text x="76" y="140" className="mono-tick">image ⇄ text</text>
+    </svg>
+  );
+}
+
+// e-commerce: a cart zooms across, pauses at checkout, dashes off
+function CartDash() {
+  return (
+    <svg viewBox="0 0 220 160" className="viz">
+      {[54, 74, 94].map((y, i) => (
+        <line key={y} x1="16" y1={y} x2="64" y2={y} className="speed-line" style={{ animationDelay: `${i * 0.12}s` }} />
+      ))}
+      <g className="cart-g">
+        <g className="tag-bob">
+          <rect x="128" y="28" width="30" height="19" rx="5" className="tag-card" />
+          <text x="138" y="42" className="tag-txt">₹</text>
+        </g>
+        <path d="M 58 52 L 74 54 L 84 94 L 144 94 L 154 64 L 78 64" className="cart-line" />
+        <circle cx="104" cy="58" r="6" className="cart-item" />
+        <rect x="116" y="50" width="12" height="12" rx="3" className="cart-item2" />
+        <g className="wheel-spin">
+          <circle cx="94" cy="108" r="7" className="cart-line" />
+          <line x1="94" y1="101" x2="94" y2="115" className="cart-line" />
+        </g>
+        <g className="wheel-spin">
+          <circle cx="136" cy="108" r="7" className="cart-line" />
+          <line x1="136" y1="101" x2="136" y2="115" className="cart-line" />
+        </g>
+      </g>
+      <text x="146" y="140" className="mono-tick">checkout ✓</text>
+    </svg>
+  );
+}
+
 const VISUALS = {
   net: NeuralNet,
   retina: RetinaScan,
@@ -525,6 +665,11 @@ const VISUALS = {
   tokens: TokenStream,
   loss: LossCurve,
   graph: NeuralNet,
+  eyecnn: EyeCNN,
+  mesh: FramesToMesh,
+  clinic: ClinicVisit,
+  xmodal: CrossModalLoop,
+  cart: CartDash,
 };
 
 function Visual({ name, reduced }) {
@@ -925,13 +1070,15 @@ export default function Portfolio() {
       {/* scroll progress rail */}
       <div className="scroll-rail" aria-hidden="true"><span /></div>
 
-      {/* ambient gradient field — reacts to scroll via --sp */}
+      {/* ambient gradient field — drifts and parallaxes with scroll */}
       <div className="blobs" aria-hidden="true">
         <span className="blob blob-1" />
         <span className="blob blob-2" />
         <span className="blob blob-3" />
         <span className="blob blob-4" />
       </div>
+      {/* contrast scrim keeps text readable over the warm lower blobs */}
+      <div className="scrim" aria-hidden="true" />
 
       <Nav dark={dark} setDark={setDark} />
 
@@ -943,7 +1090,7 @@ export default function Portfolio() {
 
         <div className="hero-panel-wrap" ref={panelRef}>
           <div className="panel hero-panel">
-            <span className="mono eyebrow">Chandigarh University · CSE ’26 · Ludhiana, India</span>
+            <span className="mono eyebrow">Auriga IT · Chandigarh University, CSE ’26 · India</span>
             <h1>
               Jasleen
               <br />
@@ -962,7 +1109,7 @@ export default function Portfolio() {
               <ShinyButton href={LINKS.github} external>
                 <Github size={15} /> GitHub
               </ShinyButton>
-              <ShinyButton href={LINKS.resume}>
+              <ShinyButton href={LINKS.resume} external>
                 <FileDown size={15} /> Résumé
               </ShinyButton>
             </div>
@@ -1006,7 +1153,7 @@ export default function Portfolio() {
         <section className="section" id="projects">
           <Reveal>
             <span className="mono eyebrow">Selected work</span>
-            <h2 className="section-title">Six things I shipped</h2>
+            <h2 className="section-title">Things I Built</h2>
           </Reveal>
           <div className="grid">
             {PROJECTS.map((p, i) => (
@@ -1040,7 +1187,8 @@ export default function Portfolio() {
         {/* ---------------- certifications ---------------- */}
         <section className="section narrow">
           <Reveal>
-            <span className="mono eyebrow">Certifications</span>
+            <span className="mono eyebrow">Credentials</span>
+            <h2 className="section-title">Certifications</h2>
           </Reveal>
           <Reveal className="panel certs">
             {CERTS.map(([name, org, year]) => (
@@ -1057,7 +1205,7 @@ export default function Portfolio() {
         <section className="section contact" id="contact">
           <Reveal className="contact-copy">
             <span className="mono eyebrow">Contact</span>
-            <h2 className="section-title">Open to agentic AI &amp; ML engineering roles</h2>
+            <h2 className="section-title">Open to ML engineering roles</h2>
             <p className="lede-sm">
               If you're building something that has to perceive the world or reason about it, I'd like to
               hear about it.
@@ -1070,7 +1218,6 @@ export default function Portfolio() {
       </main>
 
       <footer className="footer mono">
-        <span>// trained with ♥ in Punjab · loss converged 2026</span>
         <span className="footer-links">
           <a href={LINKS.github} target="_blank" rel="noopener noreferrer">github</a>
           <a href={LINKS.linkedin} target="_blank" rel="noopener noreferrer">linkedin</a>
@@ -1152,7 +1299,13 @@ html, body { margin: 0; padding: 0; background: #08080b; }
 .mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
 
 /* ---- ambient blobs ---- */
-.blobs { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+.blobs {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden;
+  /* gentle scroll parallax — translate only (cheap: the blurred layers are
+     cached textures; no re-blur, unlike the old scale effect) */
+  transform: translate3d(0, calc(var(--sp, 0) * -16vh), 0);
+  transition: transform 200ms ease-out;
+}
 .blob {
   position: absolute; border-radius: 999px; display: block;
   filter: blur(64px);
@@ -1160,13 +1313,31 @@ html, body { margin: 0; padding: 0; background: #08080b; }
   opacity: var(--blob-op);
   transition: opacity 500ms ease;
 }
-.blob-1 { top: -14%; left: -10%; width: 58vw; height: 58vw; background: #8b7cf6; animation: drift1 34s linear infinite; }
-.blob-2 { top: 14%; right: -12%; width: 48vw; height: 48vw; background: #38bdf8; animation: drift2 40s linear infinite; }
-.blob-3 { bottom: -22%; left: 16%; width: 66vw; height: 66vw; background: #fbbf24; animation: drift1 46s linear infinite reverse; opacity: calc(var(--blob-op) * 0.7); }
-.blob-4 { bottom: -8%; right: 8%; width: 40vw; height: 40vw; background: #fb7185; animation: drift2 30s linear infinite reverse; opacity: calc(var(--blob-op) * 0.7); }
+/* motion is translate-based: visibly wandering, but never re-rasterizes the blur */
+.blob-1 { top: -14%; left: -10%; width: 58vw; height: 58vw; background: #8b7cf6; animation: wander1 26s ease-in-out infinite; }
+.blob-2 { top: 14%; right: -12%; width: 48vw; height: 48vw; background: #38bdf8; animation: wander2 30s ease-in-out infinite; }
+.blob-3 { bottom: -22%; left: 16%; width: 66vw; height: 66vw; background: #b45309; animation: wander1 36s ease-in-out infinite reverse; opacity: calc(var(--blob-op) * 0.45); }
+.blob-4 { bottom: -8%; right: 8%; width: 40vw; height: 40vw; background: #fb7185; animation: wander2 24s ease-in-out infinite reverse; opacity: calc(var(--blob-op) * 0.5); }
+.theme-light .blob-3 { background: #fbbf24; opacity: calc(var(--blob-op) * 0.7); }
+.theme-light .blob-4 { opacity: calc(var(--blob-op) * 0.7); }
 @media (min-width: 768px) { .blob { filter: blur(90px); } }
-@keyframes drift1 { 0%,100% { transform: scale(1) rotate(0deg); } 50% { transform: scale(1.1) rotate(28deg); } }
-@keyframes drift2 { 0%,100% { transform: scale(1.08) rotate(0deg); } 50% { transform: scale(0.96) rotate(-22deg); } }
+@keyframes wander1 {
+  0%,100% { transform: translate3d(0,0,0); }
+  33% { transform: translate3d(9vw, 6vh, 0); }
+  66% { transform: translate3d(-6vw, -8vh, 0); }
+}
+@keyframes wander2 {
+  0%,100% { transform: translate3d(0,0,0); }
+  33% { transform: translate3d(-10vw, 7vh, 0); }
+  66% { transform: translate3d(7vw, -6vh, 0); }
+}
+/* contrast scrim: darkens progressively down the page so text stays readable
+   over the warm lower blobs; disabled in light theme */
+.scrim {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background: linear-gradient(to bottom, transparent 30%, rgba(5,5,9,0.42) 68%, rgba(5,5,9,0.6));
+}
+.theme-light .scrim { display: none; }
 
 /* ---- nav ---- */
 .nav {
@@ -1580,11 +1751,13 @@ html, body { margin: 0; padding: 0; background: #08080b; }
 .project { display: flex; flex-direction: column; overflow: hidden; }
 .project:hover .project-art { transform: scale(1.04); }
 .project-art {
-  height: 180px; display: grid; place-items: center; overflow: hidden;
+  height: 240px; display: grid; place-items: center; overflow: hidden;
   border-bottom: 1px solid var(--line);
-  background: radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--accent) 12%, transparent), transparent 70%);
+  background: radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--accent) 14%, transparent), transparent 72%);
   transition: transform 700ms cubic-bezier(0.16,1,0.3,1);
 }
+/* size by height so the whole viewBox is always visible — never cropped */
+.project-art .viz { width: auto; height: 90%; max-width: 94%; }
 .project-body { padding: 22px; display: flex; flex-direction: column; gap: 12px; flex: 1; }
 .project-head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
 .project-head h3 { margin: 0; font-size: 1.12rem; font-weight: 600; letter-spacing: -0.015em; }
@@ -1600,7 +1773,11 @@ html, body { margin: 0; padding: 0; background: #08080b; }
 .chip {
   font-size: 11px; padding: 5px 10px; border-radius: 999px;
   border: 1px solid var(--line); background: var(--glass); color: var(--muted);
-  transition: transform 200ms, color 200ms, border-color 200ms, box-shadow 200ms;
+  transition: transform 200ms, color 200ms, background 200ms, border-color 200ms, box-shadow 200ms;
+}
+.chip:hover {
+  color: var(--fg); background: var(--glass-hi);
+  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
 }
 .chip-lift:hover {
   transform: translateY(-2px); color: var(--fg);
@@ -1729,6 +1906,99 @@ html, body { margin: 0; padding: 0; background: #08080b; }
 .loss-line--val { stroke: var(--accent-2); opacity: 0.55; animation-delay: 0.3s; }
 .loss-dot { fill: var(--accent); animation: nodePulse 2s ease-in-out infinite; }
 @keyframes draw { 0% { stroke-dashoffset: 260; } 55%,100% { stroke-dashoffset: 0; } }
+
+/* ---- project card visuals v2 ---- */
+.flow-dot { fill: var(--accent-2); opacity: 0; animation: flowX 2.3s linear infinite; }
+@keyframes flowX {
+  0% { transform: translateX(0); opacity: 0; }
+  18% { opacity: 0.9; }
+  82% { opacity: 0.9; }
+  100% { transform: translateX(var(--fx, 70px)); opacity: 0; }
+}
+
+/* retinopathy */
+.cnn-layer { fill: var(--accent); fill-opacity: 0.3; stroke: var(--accent); stroke-width: 1.2; animation: layerPulse 2.4s ease-in-out infinite; }
+@keyframes layerPulse { 0%,100% { fill-opacity: 0.25; } 50% { fill-opacity: 0.7; } }
+.grade-track { fill: none; stroke: var(--line); stroke-width: 1.4; }
+.grade-fill { fill: var(--accent-2); transform-box: fill-box; transform-origin: center bottom; animation: gradeFill 3.4s ease-in-out infinite; }
+@keyframes gradeFill { 0% { transform: scaleY(0.05); } 45%,85% { transform: scaleY(0.94); } 100% { transform: scaleY(0.05); } }
+
+/* video → 3D */
+.film-frame { fill: var(--glass); stroke: var(--edge); stroke-width: 1.2; }
+.film-frame.f2 { opacity: 0.6; }
+.film-frame.f3 { opacity: 0.3; }
+.film-play { fill: var(--accent); opacity: 0.85; }
+.film { animation: filmSlide 3.4s ease-in-out infinite; }
+@keyframes filmSlide { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+.mesh-edge { stroke: var(--accent); stroke-width: 1.4; fill: none; stroke-dasharray: 70; stroke-dashoffset: 70; animation: meshDraw 3.4s ease-in-out infinite; }
+@keyframes meshDraw {
+  0% { stroke-dashoffset: 70; opacity: 0.15; }
+  40%,72% { stroke-dashoffset: 0; opacity: 0.85; }
+  100% { stroke-dashoffset: 70; opacity: 0.15; }
+}
+
+/* clinic */
+.doc-line { stroke: var(--accent); stroke-width: 2; fill: none; stroke-linecap: round; opacity: 0.85; }
+.steth { stroke: var(--accent-2); stroke-width: 1.8; fill: none; stroke-linecap: round; }
+.steth-chest { fill: var(--accent-2); animation: nodePulse 2.2s ease-in-out infinite; }
+.cross-card { fill: var(--accent); fill-opacity: 0.14; stroke: color-mix(in srgb, var(--accent) 45%, transparent); }
+.cross-mark { stroke: var(--accent); stroke-width: 2.6; stroke-linecap: round; fill: none; }
+.cross-pulse { transform-box: fill-box; transform-origin: center; animation: crossPulse 2.6s ease-in-out infinite; }
+@keyframes crossPulse { 0%,100% { transform: scale(1); opacity: 0.85; } 50% { transform: scale(1.07); opacity: 1; } }
+.ecg { fill: none; stroke: var(--accent-2); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 200; stroke-dashoffset: 200; animation: ecgDraw 2.8s linear infinite; }
+@keyframes ecgDraw {
+  0% { stroke-dashoffset: 200; opacity: 1; }
+  68% { stroke-dashoffset: 0; opacity: 1; }
+  84% { opacity: 0; }
+  100% { stroke-dashoffset: 200; opacity: 0; }
+}
+
+/* cross-modal */
+.xm-panel { fill: var(--glass); stroke: var(--line); stroke-width: 1.2; }
+.xm-sun { fill: var(--accent-warm); opacity: 0.85; }
+.xm-mtn { fill: none; stroke: var(--accent); stroke-width: 1.8; stroke-linejoin: round; }
+.xm-line { fill: var(--accent-2); opacity: 0.85; transform-box: fill-box; transform-origin: left center; animation: xmType 4.8s ease-in-out infinite; }
+@keyframes xmType { 0%,8% { transform: scaleX(0); } 26%,74% { transform: scaleX(1); } 90%,100% { transform: scaleX(0); } }
+.xm-arc { fill: none; stroke: var(--line); stroke-width: 1; stroke-dasharray: 3 5; }
+.xm-dot-go { fill: var(--accent); animation: xmGo 2.4s ease-in-out infinite; }
+.xm-dot-back { fill: var(--accent-2); animation: xmBack 2.4s ease-in-out infinite; animation-delay: 1.2s; }
+@keyframes xmGo {
+  0% { transform: translate(0,0); opacity: 0; }
+  12% { opacity: 1; }
+  50% { transform: translate(22px,-13px); }
+  88% { opacity: 1; }
+  100% { transform: translate(44px,0); opacity: 0; }
+}
+@keyframes xmBack {
+  0% { transform: translate(0,0); opacity: 0; }
+  12% { opacity: 1; }
+  50% { transform: translate(-22px,13px); }
+  88% { opacity: 1; }
+  100% { transform: translate(-44px,0); opacity: 0; }
+}
+.xm-glow-a { animation: xmGlow 4.8s ease-in-out infinite; }
+.xm-glow-b { animation: xmGlow 4.8s ease-in-out infinite; animation-delay: 2.4s; }
+@keyframes xmGlow { 0%,40%,100% { stroke: var(--line); } 10%,26% { stroke: var(--accent); } }
+
+/* e-commerce cart */
+.cart-g { animation: cartZoom 5s cubic-bezier(0.45,0,0.25,1) infinite; }
+@keyframes cartZoom {
+  0% { transform: translateX(-200px); }
+  40% { transform: translateX(0); }
+  62% { transform: translateX(4px); }
+  100% { transform: translateX(250px); }
+}
+.cart-line { stroke: var(--accent); stroke-width: 2.2; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.cart-item { fill: var(--accent-2); opacity: 0.8; }
+.cart-item2 { fill: var(--accent-warm); opacity: 0.7; }
+.wheel-spin { transform-box: fill-box; transform-origin: center; animation: spin360 0.8s linear infinite; }
+@keyframes spin360 { to { transform: rotate(360deg); } }
+.speed-line { stroke: var(--accent-2); stroke-width: 1.5; stroke-linecap: round; opacity: 0; animation: speedFlash 5s linear infinite; }
+@keyframes speedFlash { 0%,34% { opacity: 0; } 44%,58% { opacity: 0.6; } 70%,100% { opacity: 0; } }
+.tag-card { fill: var(--accent); fill-opacity: 0.15; stroke: color-mix(in srgb, var(--accent) 45%, transparent); }
+.tag-txt { font-family: 'JetBrains Mono', monospace; font-size: 12px; fill: var(--accent); }
+.tag-bob { animation: bobTag 2.2s ease-in-out infinite; }
+@keyframes bobTag { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
 
 @media (prefers-reduced-motion: reduce) {
   .root *, .root *::before, .root *::after {
