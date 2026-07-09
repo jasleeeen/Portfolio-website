@@ -414,14 +414,14 @@ function PointCloud({ reduced }) {
     const cv = canvasRef.current;
     if (!cv) return;
     const ctx = cv.getContext("2d");
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
     const size = 220;
     cv.width = size * dpr;
     cv.height = size * dpr;
     ctx.scale(dpr, dpr);
 
     // sparse torus-knot-ish cloud so it reads as a scanned object
-    const pts = Array.from({ length: 420 }, () => {
+    const pts = Array.from({ length: 260 }, () => {
       const u = Math.random() * Math.PI * 2;
       const v = Math.random() * Math.PI * 2;
       const R = 46 + Math.random() * 3;
@@ -435,9 +435,21 @@ function PointCloud({ reduced }) {
 
     let angle = 0;
     let raf;
+    let visible = true;
     const accent = getComputedStyle(cv).getPropertyValue("--accent").trim() || "#8b7cf6";
 
+    // stop animating while the canvas is scrolled out of view
+    const io = new IntersectionObserver(
+      ([e]) => {
+        visible = e.isIntersecting;
+        if (visible && !reduced && !raf) raf = requestAnimationFrame(draw);
+      },
+      { threshold: 0 }
+    );
+    io.observe(cv);
+
     const draw = () => {
+      raf = 0;
       ctx.clearRect(0, 0, size, size);
       const cos = Math.cos(angle);
       const sin = Math.sin(angle);
@@ -458,13 +470,16 @@ function PointCloud({ reduced }) {
         ctx.fill();
       }
       ctx.globalAlpha = 1;
-      if (!reduced) {
+      if (!reduced && visible) {
         angle += 0.0042;
         raf = requestAnimationFrame(draw);
       }
     };
     draw();
-    return () => cancelAnimationFrame(raf);
+    return () => {
+      cancelAnimationFrame(raf);
+      io.disconnect();
+    };
   }, [reduced]);
 
   return <canvas ref={canvasRef} className="viz cloud-canvas" aria-hidden="true" />;
@@ -1080,6 +1095,12 @@ export default function Portfolio() {
 const CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Sora:wght@200;300;400;600;800&family=JetBrains+Mono:wght@400;500&display=swap');
 
+/* page reset — lives here so it applies even if index.css isn't imported,
+   and overrides Vite's template defaults (#root max-width/padding, body flex) */
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; background: #08080b; }
+#root { max-width: none; margin: 0; padding: 0; min-height: 100vh; text-align: left; display: block; }
+
 .root {
   --bg: #08080b;
   --fg: #f2f2f5;
@@ -1134,18 +1155,18 @@ const CSS = `
 .blobs { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
 .blob {
   position: absolute; border-radius: 999px; display: block;
-  filter: blur(110px);
+  filter: blur(64px);
   mix-blend-mode: var(--blob-blend);
   opacity: var(--blob-op);
   transition: opacity 500ms ease;
 }
-.blob-1 { top: -14%; left: -10%; width: 58vw; height: 58vw; background: #8b7cf6; animation: drift1 22s linear infinite; }
-.blob-2 { top: 14%; right: -12%; width: 48vw; height: 48vw; background: #38bdf8; animation: drift2 26s linear infinite; }
-.blob-3 { bottom: -22%; left: 16%; width: 66vw; height: 66vw; background: #fbbf24; animation: drift1 30s linear infinite reverse; opacity: calc(var(--blob-op) * 0.7); }
-.blob-4 { bottom: -8%; right: 8%; width: 40vw; height: 40vw; background: #fb7185; animation: drift2 19s linear infinite reverse; opacity: calc(var(--blob-op) * 0.7); }
-@media (min-width: 768px) { .blob { filter: blur(150px); } }
-@keyframes drift1 { 0%,100% { transform: scale(1) rotate(0deg); } 50% { transform: scale(1.22) rotate(90deg); } }
-@keyframes drift2 { 0%,100% { transform: scale(1.18) rotate(0deg); } 50% { transform: scale(0.94) rotate(-70deg); } }
+.blob-1 { top: -14%; left: -10%; width: 58vw; height: 58vw; background: #8b7cf6; animation: drift1 34s linear infinite; }
+.blob-2 { top: 14%; right: -12%; width: 48vw; height: 48vw; background: #38bdf8; animation: drift2 40s linear infinite; }
+.blob-3 { bottom: -22%; left: 16%; width: 66vw; height: 66vw; background: #fbbf24; animation: drift1 46s linear infinite reverse; opacity: calc(var(--blob-op) * 0.7); }
+.blob-4 { bottom: -8%; right: 8%; width: 40vw; height: 40vw; background: #fb7185; animation: drift2 30s linear infinite reverse; opacity: calc(var(--blob-op) * 0.7); }
+@media (min-width: 768px) { .blob { filter: blur(90px); } }
+@keyframes drift1 { 0%,100% { transform: scale(1) rotate(0deg); } 50% { transform: scale(1.1) rotate(28deg); } }
+@keyframes drift2 { 0%,100% { transform: scale(1.08) rotate(0deg); } 50% { transform: scale(0.96) rotate(-22deg); } }
 
 /* ---- nav ---- */
 .nav {
@@ -1213,8 +1234,8 @@ const CSS = `
   border: 1px solid rgba(255,255,255,0.14);
   border-top-color: rgba(255,255,255,0.30);
   box-shadow: var(--shadow);
-  backdrop-filter: blur(3px) saturate(180%) brightness(1.05);
-  -webkit-backdrop-filter: blur(3px) saturate(180%) brightness(1.05);
+  backdrop-filter: blur(3px) saturate(140%);
+  -webkit-backdrop-filter: blur(3px) saturate(140%);
   display: grid; place-items: center;
   animation-name: bob; animation-iteration-count: infinite; animation-timing-function: ease-in-out;
   transform: rotate(var(--rot));
@@ -1256,8 +1277,8 @@ const CSS = `
   background: linear-gradient(170deg, rgba(255,255,255,0.055), rgba(16,16,22,0.28) 55%);
   border: 1px solid transparent;
   border-radius: 28px;
-  backdrop-filter: blur(7px) saturate(180%) brightness(1.05);
-  -webkit-backdrop-filter: blur(7px) saturate(180%) brightness(1.05);
+  backdrop-filter: blur(5px) saturate(140%);
+  -webkit-backdrop-filter: blur(5px) saturate(140%);
   box-shadow: var(--shadow);
   position: relative;
   background-clip: padding-box;
@@ -1301,8 +1322,8 @@ const CSS = `
 .panel > * { position: relative; z-index: 2; }
 .hero-panel { padding: 26px 22px 24px; text-align: center; }
 .hero-panel.panel {
-  backdrop-filter: blur(9px) saturate(185%) brightness(1.07);
-  -webkit-backdrop-filter: blur(9px) saturate(185%) brightness(1.07);
+  backdrop-filter: blur(6px) saturate(150%);
+  -webkit-backdrop-filter: blur(6px) saturate(150%);
 }
 @media (min-width: 640px) { .hero-panel { padding: 36px 36px 32px; border-radius: 36px; } }
 .eyebrow {
@@ -1615,8 +1636,8 @@ const CSS = `
   background: linear-gradient(155deg, rgba(255,255,255,0.05), rgba(14,14,20,0.30) 60%);
   border: 1px solid rgba(255,255,255,0.14);
   border-top-color: rgba(255,255,255,0.32);
-  backdrop-filter: blur(8px) saturate(185%) brightness(1.05);
-  -webkit-backdrop-filter: blur(8px) saturate(185%) brightness(1.05);
+  backdrop-filter: blur(6px) saturate(150%);
+  -webkit-backdrop-filter: blur(6px) saturate(150%);
   box-shadow: var(--shadow);
   color: var(--fg); text-decoration: none;
   top: calc(var(--i) * 14px);
