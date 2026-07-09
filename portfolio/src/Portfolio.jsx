@@ -1324,9 +1324,10 @@ html, body { margin: 0; padding: 0; background: #08080b; }
 
 /* ---- ambient blobs ---- */
 .blobs {
-  position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden;
+  position: fixed; inset: -20vh 0; z-index: 0; pointer-events: none; overflow: hidden;
   /* gentle scroll parallax — translate only (cheap: the blurred layers are
-     cached textures; no re-blur, unlike the old scale effect) */
+     cached textures; no re-blur, unlike the old scale effect).
+     The layer is oversized (-20vh top/bottom) so the shift never exposes its edge. */
   transform: translate3d(0, calc(var(--sp, 0) * -16vh), 0);
   transition: transform 200ms ease-out;
 }
