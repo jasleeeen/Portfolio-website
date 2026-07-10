@@ -1,0 +1,35 @@
+.gradient-border{
+
+position:fixed;
+
+inset:0;
+
+pointer-events:none;
+
+z-index:99999;
+
+border:1px solid transparent;
+
+background:
+linear-gradient(#0000,#0000) padding-box,
+linear-gradient(
+135deg,
+rgba(124,92,255,.4),
+rgba(53,194,255,.4)
+) border-box;
+
+mask:
+linear-gradient(#fff 0 0) padding-box,
+linear-gradient(#fff 0 0);
+
+-webkit-mask:
+linear-gradient(#fff 0 0) padding-box,
+linear-gradient(#fff 0 0);
+
+mask-composite:exclude;
+
+-webkit-mask-composite:xor;
+
+opacity:.35;
+
+}

@@ -1,122 +1,215 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { useEffect, useState } from "react";
 
-function App() {
-  const [count, setCount] = useState(0)
+import "./styles/variables.css";
+import "./styles/globals.css";
+import "./styles/animations.css";
+import "./styles/utilities.css";
+import "./styles/konami.css";
+
+import Loader from "./components/Loader/Loader";
+
+import Cursor from "./components/Cursor/Cursor";
+import CursorTrail from "./components/Cursor/CursorTrail";
+
+import DeveloperConsole from "./components/DeveloperConsole/DeveloperConsole";
+import CommandPalette from "./components/CommandPalette/CommandPalette";
+import Konami from "./components/EasterEgg/Konami";
+
+import ThemeController from "./components/UI/ThemeController";
+import PerformanceMode from "./components/UI/PerformanceMode";
+
+import GridGlow from "./components/Background/GridGlow";
+import MorphBackground from "./components/UI/MorphBackground";
+import PageGrid from "./components/UI/PageGrid";
+import AmbientLight from "./components/UI/AmbientLight";
+import PageBlur from "./components/UI/PageBlur";
+import NoiseOverlay from "./components/UI/NoiseOverlay";
+import FloatingOrbs from "./components/UI/FloatingOrbs";
+import Spotlight from "./components/UI/Spotlight";
+import FadeMask from "./components/UI/FadeMask";
+import Vignette from "./components/UI/Vignette";
+import ScanLines from "./components/UI/ScanLines";
+
+import GradientBorder from "./components/UI/GradientBorder";
+import CornerAccent from "./components/UI/CornerAccent";
+import FocusRing from "./components/UI/FocusRing";
+import CinematicOverlay from "./components/UI/CinematicOverlay";
+
+import LoadingBar from "./components/UI/LoadingBar";
+
+import AIHud from "./components/HUD/AIHud";
+import HUDProgress from "./components/HUD/HUDProgress";
+import FPSCounter from "./components/HUD/FPSCounter";
+import PerformanceMonitor from "./components/Performance/PerformanceMonitor";
+import DeviceStatus from "./components/HUD/DeviceStatus";
+import NetworkStatus from "./components/Status/NetworkStatus";
+import PageStatus from "./components/HUD/PageStatus";
+import Viewport from "./components/HUD/Viewport";
+import ScrollDirection from "./components/UI/ScrollDirection";
+import CurrentSection from "./components/HUD/CurrentSection";
+import SystemClock from "./components/HUD/SystemClock";
+import SystemStats from "./components/Assistant/SystemStats";
+import IdleStatus from "./components/HUD/IdleStatus";
+
+import AssistantOrb from "./components/Assistant/AssistantOrb";
+
+import Navigation from "./components/Navigation/Navigation";
+
+import Hero from "./components/Hero/Hero";
+import About from "./components/About/About";
+import TechMarquee from "./components/Marquee/TechMarquee";
+import DomainReel from "./components/Domains/DomainReel";
+import Quote from "./components/Quote/Quote";
+import Projects from "./components/Projects/Projects";
+import GitHubStats from "./components/GitHubStats/GitHubStats";
+import Skills from "./components/Skills/Skills";
+import Certificates from "./components/Certificates/Certificates";
+import Achievements from "./components/Achievements/Achievements";
+import Timeline from "./components/Timeline/Timeline";
+import Availability from "./components/Availability/Availability";
+import Contact from "./components/Contact/Contact";
+import Shutdown from "./components/Shutdown/Shutdown";
+
+import SectionTransition from "./components/UI/SectionTransition";
+
+import ScrollToBottom from "./components/UI/ScrollToBottom";
+import BackToTop from "./components/UI/BackToTop";
+import SectionDots from "./components/UI/SectionDots";
+import VersionBadge from "./components/UI/VersionBadge";
+
+import Footer from "./components/Footer/Footer";
+
+import PageTransition from "./components/UI/PageTransition";
+import MobileNotice from "./components/UI/MobileNotice";
+import CustomSelection from "./components/UI/CustomSelection";
+
+export default function App() {
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    document.documentElement.style.scrollBehavior = "smooth";
+
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 2600);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (loading) {
+    return <Loader />;
+  }
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <div className="app-shell">
 
-      <div className="ticks"></div>
+      <LoadingBar />
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+      <GridGlow />
+      <MorphBackground />
+      <PageGrid />
+      <AmbientLight />
+      <PageBlur />
+      <FadeMask />
+      <NoiseOverlay />
+      <FloatingOrbs />
+      <Spotlight />
+      <Vignette />
+      <ScanLines />
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+      <Cursor />
+      <CursorTrail />
+
+      <DeveloperConsole />
+      <CommandPalette />
+      <ThemeController />
+      <PerformanceMode />
+      <Konami />
+
+      <GradientBorder />
+      <CornerAccent />
+      <FocusRing />
+      <CinematicOverlay />
+      <CustomSelection />
+
+      <AIHud />
+      <HUDProgress />
+      <FPSCounter />
+      <PerformanceMonitor />
+      <DeviceStatus />
+      <NetworkStatus />
+      <PageStatus />
+      <Viewport />
+      <ScrollDirection />
+      <CurrentSection />
+      <SystemClock />
+      <SystemStats />
+      <IdleStatus />
+
+      <AssistantOrb />
+
+      <Navigation />
+
+      <SectionDots />
+
+      <MobileNotice />
+
+      <PageTransition>
+
+        <main>
+
+          <Hero />
+          <SectionTransition />
+
+          <About />
+          <SectionTransition />
+
+          <TechMarquee />
+          <SectionTransition />
+
+          <DomainReel />
+          <SectionTransition />
+
+          <Quote />
+          <SectionTransition />
+
+          <Projects />
+          <SectionTransition />
+
+          <GitHubStats />
+          <SectionTransition />
+
+          <Skills />
+          <SectionTransition />
+
+          <Certificates />
+          <SectionTransition />
+
+          <Achievements />
+          <SectionTransition />
+
+          <Timeline />
+          <SectionTransition />
+
+          <Availability />
+          <SectionTransition />
+
+          <Contact />
+
+          <Shutdown />
+
+        </main>
+
+      </PageTransition>
+
+      <VersionBadge />
+
+      <ScrollToBottom />
+
+      <BackToTop />
+
+      <Footer />
+
+    </div>
+  );
 }
-
-export default App

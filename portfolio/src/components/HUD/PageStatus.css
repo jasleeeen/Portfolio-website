@@ -1,0 +1,55 @@
+.page-status{
+
+position:fixed;
+
+left:28px;
+
+top:305px;
+
+display:flex;
+
+align-items:center;
+
+gap:12px;
+
+padding:14px 18px;
+
+border-radius:18px;
+
+background:rgba(255,255,255,.05);
+
+border:1px solid rgba(255,255,255,.08);
+
+backdrop-filter:blur(18px);
+
+font-family:"JetBrains Mono",monospace;
+
+z-index:1000;
+
+}
+
+.page-status span{
+
+width:10px;
+
+height:10px;
+
+border-radius:50%;
+
+}
+
+.page-status .online{
+
+background:#35ff8b;
+
+box-shadow:0 0 12px #35ff8b;
+
+}
+
+.page-status .away{
+
+background:#ffb347;
+
+box-shadow:0 0 12px #ffb347;
+
+}

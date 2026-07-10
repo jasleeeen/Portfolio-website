@@ -1,0 +1,65 @@
+.corner{
+
+position:fixed;
+
+width:30px;
+
+height:30px;
+
+border-color:#7c5cff;
+
+pointer-events:none;
+
+z-index:9999;
+
+opacity:.5;
+
+}
+
+.tl{
+
+top:18px;
+
+left:18px;
+
+border-top:2px solid;
+
+border-left:2px solid;
+
+}
+
+.tr{
+
+top:18px;
+
+right:18px;
+
+border-top:2px solid;
+
+border-right:2px solid;
+
+}
+
+.bl{
+
+left:18px;
+
+bottom:18px;
+
+border-left:2px solid;
+
+border-bottom:2px solid;
+
+}
+
+.br{
+
+right:18px;
+
+bottom:18px;
+
+border-right:2px solid;
+
+border-bottom:2px solid;
+
+}

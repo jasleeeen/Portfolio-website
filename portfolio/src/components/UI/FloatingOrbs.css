@@ -1,0 +1,75 @@
+.floating-orbs{
+
+position:fixed;
+
+inset:0;
+
+pointer-events:none;
+
+overflow:hidden;
+
+z-index:-1;
+
+}
+
+.floating-orbs span{
+
+position:absolute;
+
+width:280px;
+
+height:280px;
+
+border-radius:50%;
+
+filter:blur(120px);
+
+animation:floatSlow 12s infinite ease-in-out;
+
+}
+
+.floating-orbs span:nth-child(1){
+
+top:10%;
+
+left:5%;
+
+background:#7c5cff33;
+
+}
+
+.floating-orbs span:nth-child(2){
+
+top:65%;
+
+left:75%;
+
+background:#35c2ff33;
+
+animation-delay:2s;
+
+}
+
+.floating-orbs span:nth-child(3){
+
+top:40%;
+
+left:35%;
+
+background:#8b5cf633;
+
+animation-delay:4s;
+
+}
+
+.floating-orbs span:nth-child(4){
+
+top:80%;
+
+left:15%;
+
+background:#22d3ee22;
+
+animation-delay:6s;
+
+}

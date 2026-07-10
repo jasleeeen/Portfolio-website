@@ -10,7 +10,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@studio-freight/lenis": "^1.0.42",
     "@vercel/analytics": "^1.4.1",
+    "framer-motion": "^12.42.2",
     "lucide-react": "^0.469.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7"

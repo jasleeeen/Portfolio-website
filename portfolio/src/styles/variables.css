@@ -1,0 +1,149 @@
+:root {
+
+/* ===========================
+   COLORS
+=========================== */
+
+--bg: #05070d;
+--bg-secondary: #0a0f18;
+--bg-elevated: rgba(16,20,32,.72);
+
+--text: #f8fafc;
+--text-secondary: #b7c0d1;
+--text-muted: #7d8799;
+
+--border: rgba(255,255,255,.08);
+--glass-border: rgba(255,255,255,.12);
+
+--primary: #7c5cff;
+--secondary: #35c2ff;
+
+--cv: #3ba7ff;
+--dl: #9c6cff;
+--recon: #31d4ff;
+--multi: #ff9d42;
+--agent: #40e38d;
+
+--success: #29d17c;
+--danger: #ff5d6c;
+--warning: #ffc247;
+
+
+/* ===========================
+   GLASS
+=========================== */
+
+--glass-bg: rgba(255,255,255,.045);
+--glass-bg-strong: rgba(255,255,255,.08);
+
+--blur: 24px;
+
+
+/* ===========================
+   SHADOWS
+=========================== */
+
+--shadow-sm:
+0 4px 18px rgba(0,0,0,.18);
+
+--shadow-md:
+0 10px 35px rgba(0,0,0,.32);
+
+--shadow-lg:
+0 24px 80px rgba(0,0,0,.55);
+
+
+/* ===========================
+   RADIUS
+=========================== */
+
+--radius-xs:8px;
+--radius-sm:14px;
+--radius-md:20px;
+--radius-lg:28px;
+--radius-xl:42px;
+
+
+/* ===========================
+   SPACING
+=========================== */
+
+--space-1:.25rem;
+--space-2:.5rem;
+--space-3:.75rem;
+--space-4:1rem;
+--space-5:1.5rem;
+--space-6:2rem;
+--space-7:3rem;
+--space-8:5rem;
+--space-9:7rem;
+
+
+/* ===========================
+   TYPOGRAPHY
+=========================== */
+
+--hero: clamp(4rem,9vw,8rem);
+
+--h1: clamp(2.8rem,6vw,5rem);
+--h2: clamp(2.2rem,4vw,3.6rem);
+--h3: clamp(1.5rem,3vw,2rem);
+
+--body:1rem;
+--small:.9rem;
+
+
+/* ===========================
+   TRANSITIONS
+=========================== */
+
+--fast:.18s;
+--normal:.35s;
+--slow:.7s;
+--very-slow:1.3s;
+
+--ease:cubic-bezier(.22,.61,.36,1);
+
+
+/* ===========================
+   Z INDEX
+=========================== */
+
+--z-loader:99999;
+--z-nav:1000;
+--z-cursor:900;
+--z-workspace:100;
+--z-content:10;
+
+
+/* ===========================
+   MAX WIDTH
+=========================== */
+
+--content:1240px;
+
+
+/* ===========================
+   WORKSPACE
+=========================== */
+
+--workspace-perspective:1800px;
+
+--workspace-depth:900px;
+
+--particle-opacity:.22;
+
+--lighting-strength:.8;
+
+
+/* ===========================
+   CURSOR
+=========================== */
+
+--cursor-size:14px;
+
+--cursor-ring:42px;
+
+--cursor-glow:150px;
+
+}

@@ -1,0 +1,39 @@
+.focus-ring{
+
+position:fixed;
+
+inset:14px;
+
+pointer-events:none;
+
+border:1px solid rgba(124,92,255,.12);
+
+border-radius:28px;
+
+z-index:9998;
+
+animation:focusPulse 5s ease-in-out infinite;
+
+}
+
+@keyframes focusPulse{
+
+0%{
+
+opacity:.2;
+
+}
+
+50%{
+
+opacity:.45;
+
+}
+
+100%{
+
+opacity:.2;
+
+}
+
+}

@@ -1,0 +1,11 @@
+.konami-mode{
+
+filter:hue-rotate(90deg) saturate(1.4);
+
+}
+
+.konami-mode *{
+
+transition:1s;
+
+}

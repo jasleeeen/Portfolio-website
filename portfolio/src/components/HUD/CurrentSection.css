@@ -1,0 +1,47 @@
+.current-section{
+
+position:fixed;
+
+right:30px;
+
+bottom:35px;
+
+padding:18px 22px;
+
+border-radius:18px;
+
+background:rgba(255,255,255,.05);
+
+border:1px solid rgba(255,255,255,.08);
+
+backdrop-filter:blur(20px);
+
+z-index:1000;
+
+min-width:180px;
+
+}
+
+.current-section span{
+
+display:block;
+
+font-size:.72rem;
+
+letter-spacing:2px;
+
+color:var(--color-secondary);
+
+margin-bottom:6px;
+
+}
+
+.current-section h4{
+
+font-size:1rem;
+
+font-weight:600;
+
+text-transform:capitalize;
+
+}

@@ -1,0 +1,51 @@
+.page-blur{
+
+position:fixed;
+
+inset:0;
+
+pointer-events:none;
+
+overflow:hidden;
+
+z-index:-2;
+
+}
+
+.page-blur span{
+
+position:absolute;
+
+width:700px;
+
+height:700px;
+
+border-radius:50%;
+
+filter:blur(180px);
+
+animation:floatSlow 16s infinite;
+
+}
+
+.page-blur span:first-child{
+
+left:-200px;
+
+top:-200px;
+
+background:#7c5cff20;
+
+}
+
+.page-blur span:last-child{
+
+right:-250px;
+
+bottom:-250px;
+
+background:#35c2ff20;
+
+animation-delay:5s;
+
+}

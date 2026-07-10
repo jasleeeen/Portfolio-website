@@ -1,0 +1,61 @@
+.availability{
+
+padding:120px 0;
+
+display:flex;
+
+justify-content:center;
+
+}
+
+.availability-card{
+
+width:min(900px,100%);
+
+padding:55px;
+
+border-radius:28px;
+
+text-align:center;
+
+background:rgba(255,255,255,.05);
+
+border:1px solid rgba(255,255,255,.08);
+
+backdrop-filter:blur(20px);
+
+}
+
+.status{
+
+display:inline-block;
+
+width:14px;
+
+height:14px;
+
+border-radius:50%;
+
+background:#3dff91;
+
+box-shadow:0 0 20px #3dff91;
+
+animation:pulse 2s infinite;
+
+margin-bottom:24px;
+
+}
+
+.availability-card h2{
+
+font-size:3rem;
+
+margin-bottom:18px;
+
+}
+
+.availability-card p{
+
+font-size:1.05rem;
+
+}

@@ -1,0 +1,43 @@
+.device-status{
+
+position:fixed;
+
+left:28px;
+
+top:165px;
+
+padding:14px 18px;
+
+border-radius:18px;
+
+background:rgba(255,255,255,.05);
+
+border:1px solid rgba(255,255,255,.08);
+
+backdrop-filter:blur(18px);
+
+font-family:"JetBrains Mono",monospace;
+
+z-index:1000;
+
+}
+
+.device-status span{
+
+display:block;
+
+font-size:.72rem;
+
+color:var(--color-text-muted);
+
+margin-bottom:5px;
+
+text-transform:uppercase;
+
+}
+
+.device-status strong{
+
+text-transform:capitalize;
+
+}

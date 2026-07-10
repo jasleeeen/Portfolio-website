@@ -1,0 +1,45 @@
+.project-filter{
+
+display:flex;
+
+justify-content:center;
+
+gap:16px;
+
+margin-bottom:60px;
+
+flex-wrap:wrap;
+
+}
+
+.project-filter button{
+
+padding:12px 24px;
+
+border-radius:999px;
+
+background:rgba(255,255,255,.05);
+
+border:1px solid rgba(255,255,255,.08);
+
+color:white;
+
+transition:.3s;
+
+}
+
+.project-filter button:hover{
+
+transform:translateY(-4px);
+
+}
+
+.project-filter .active{
+
+background:linear-gradient(
+135deg,
+#7c5cff,
+#35c2ff
+);
+
+}
