@@ -191,9 +191,9 @@ const CURRENTLY = [
 
 /* the scroll-film chapters — countries become domains.
    Each card: v = visual name, x/y = resting offset from center, r = tilt. */
-// Each chapter is a full "scene" the camera scrubs through. Countries become
+// Each chapter is a full "scene" the camera flies through. Countries become
 // domains; the reference's photo cards become the site's own live ML visuals.
-// 3 cards per scene, placed at edge slots so they frame — not cover — the word.
+// 3 cards per scene, placed on radial slots so they frame — not cover — the word.
 const DOMAINS = [
   { word: "Computer Vision", caption: "teaching machines to see",
     tags: ["cv · rt", "iou 0.91", "fps 30"], cards: ["retina", "face", "eyecnn"] },
@@ -207,13 +207,14 @@ const DOMAINS = [
     tags: ["ReAct", "tools", "rag"], cards: ["agent", "net", "loss"] },
 ];
 
-// Fixed edge constellation reused by every scene. left/top = anchor,
-// speed = parallax px (differential vs the scrubbing track), r = tilt,
-// s = size multiplier. Slots sit clear of the centered word band.
+// Center-relative radial offsets (px, at scale 1) for the 3 cards in each
+// scene. As a scene's depth passes through the camera, its cards' offsets
+// are multiplied by the current scale, so they spread outward past the
+// viewer — the "flying through floating panels" motion. r = resting tilt.
 const CARD_SLOTS = [
-  { left: "5vw", top: "16vh", speed: -78, r: -5, s: 0.94 },
-  { left: "69vw", top: "23vh", speed: 104, r: 5, s: 1.14 },
-  { left: "20vw", top: "60vh", speed: -52, r: 6, s: 0.82 },
+  { bx: -230, by: -100, r: -6 },
+  { bx: 240, by: 46, r: 5 },
+  { bx: -130, by: 175, r: 7 },
 ];
 
 /* ------------------------------------------------------------------ */
@@ -306,39 +307,6 @@ function useScrollProgress() {
       cancelAnimationFrame(raf);
     };
   }, []);
-}
-
-// Progress through a tall pinned wrapper: 0 when its top hits the viewport
-// top, 1 when its bottom leaves. Writes --rp to the wrapper (continuous,
-// no re-render) and returns the current segment index (state, discrete).
-function useReelProgress(wrapRef, segments) {
-  const [seg, setSeg] = useState(0);
-  useEffect(() => {
-    const el = wrapRef.current;
-    if (!el) return;
-    let raf = 0;
-    const update = () => {
-      raf = 0;
-      const r = el.getBoundingClientRect();
-      const total = r.height - window.innerHeight;
-      const p = total > 0 ? Math.min(Math.max(-r.top / total, 0), 1) : 0;
-      el.style.setProperty("--rp", p.toFixed(4));
-      const s = Math.min(Math.floor(p * segments), segments - 1);
-      setSeg((prev) => (prev === s ? prev : s));
-    };
-    const onScroll = () => {
-      if (!raf) raf = requestAnimationFrame(update);
-    };
-    update();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onScroll);
-    return () => {
-      window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onScroll);
-      cancelAnimationFrame(raf);
-    };
-  }, [wrapRef, segments]);
-  return seg;
 }
 
 function Reveal({ children, delay = 0, as: Tag = "div", className = "", ...rest }) {
@@ -891,33 +859,35 @@ function Typewriter({ words = ROTATING }) {
 }
 
 /* ------------------------------------------------------------------ */
-/* domain reel — a pinned scroll-film through the tech domains.        */
-/* Countries in the reference become domains; the photography becomes  */
-/* the site's own live ML visuals. Native scroll, no hijacking: a tall */
-/* wrapper + sticky stage, progress drives everything.                 */
+/* domain reel — a pinned scroll-driven fly-through of the tech        */
+/* domains. Countries in the reference become domains; the photography */
+/* becomes the site's own live ML visuals. Native scroll, no hijacking:*/
+/* a tall wrapper + sticky stage, progress drives everything. Each     */
+/* scene lives dead-center as a "shot": it emerges small and distant,  */
+/* grows to full size as the camera reaches it, then rushes past and   */
+/* blurs away while the next domain grows in behind it — a dolly zoom, */
+/* not a slide.                                                        */
 /* ------------------------------------------------------------------ */
 
 function DomainReel({ reduced }) {
   const wrapRef = useRef(null);
-  const trackRef = useRef(null);
   const horizonRef = useRef(null);
   const railRef = useRef(null);
   const counterRef = useRef(null);
-  const cardRefs = useRef([]);
+  const sceneRefs = useRef([]);
   const chips = SKILLS.flatMap((g) => g.items);
   const SCENES = DOMAINS.length;
   const TOTAL = SCENES + 1; // + finale scene
 
-  // reset the flat card registry each render (single render — no state here)
-  cardRefs.current = [];
+  // reset the flat scene registry each render (single render — no state here)
+  sceneRefs.current = Array.from({ length: TOTAL }, () => ({ cards: [] }));
 
-  // one continuous scrub loop: everything is a function of scroll progress,
-  // so it reads like scrubbing a video, never like discrete steps
+  // one continuous scrub loop: every scene's depth is a function of scroll
+  // progress, so it reads like scrubbing a video, never like discrete steps
   useEffect(() => {
     if (reduced) return;
     const wrap = wrapRef.current;
-    const track = trackRef.current;
-    if (!wrap || !track) return;
+    if (!wrap) return;
     const clamp = (v, a, b) => Math.min(Math.max(v, a), b);
     let raf = 0;
 
@@ -929,41 +899,74 @@ function DomainReel({ reduced }) {
       const rp = total > 0 ? clamp(-r.top / total, 0, 1) : 0;
       wrap.style.setProperty("--rp", rp.toFixed(4));
 
-      // the camera: slide the whole filmstrip continuously
-      const trackY = -rp * (TOTAL - 1) * vh;
-      track.style.transform = `translate3d(0, ${trackY}px, 0)`;
+      // scrollUnits sweeps 0 → TOTAL-1 across the whole pinned section;
+      // scene i is dead-center (full size, sharp) when scrollUnits === i
+      const scrollUnits = rp * (TOTAL - 1);
 
-      for (const c of cardRefs.current) {
-        if (!c || !c.el) continue;
-        // signed distance (in viewports) of this card's scene from center
-        const d = ((c.scene + 0.5) * vh + trackY - vh / 2) / vh;
-        const ad = Math.abs(d);
-        if (c.deck) {
-          // finale: cards fan out of a stack as the scene reaches center
-          const spread = 1 - clamp(ad * 1.6, 0, 1);
-          const fan = c.di - (SCENES - 1) / 2; // -2 .. 2
-          const tx = fan * 32 * spread;
-          const ty = d * 44 + (1 - spread) * 8;
-          const rot = fan * 7 * spread;
-          const sc = 0.86 - ad * 0.05;
-          c.el.style.opacity = clamp(1 - ad * 1.15, 0, 1).toFixed(3);
-          c.el.style.transform =
-            `translate(-50%,-50%) translate3d(${tx}px, ${ty}px, 0) rotate(${rot}deg) scale(${sc.toFixed(3)})`;
-        } else {
-          const py = d * c.speed;
-          const sc = (1 - ad * 0.05) * c.base;
-          c.el.style.opacity = clamp(1 - ad * 1.15, 0, 1).toFixed(3);
-          c.el.style.transform =
-            `translate3d(0, ${py.toFixed(1)}px, 0) rotate(${c.r}deg) scale(${sc.toFixed(3)})`;
+      sceneRefs.current.forEach((s, i) => {
+        if (!s || !s.root) return;
+        const depth = scrollUnits - i; // <0 approaching, 0 arrived, >0 flown past
+        const absD = Math.abs(depth);
+        const visible = absD < 1.35;
+
+        if (!visible) {
+          s.root.style.opacity = "0";
+          s.root.style.pointerEvents = "none";
+          return;
         }
-      }
+
+        // exponential scale reads as camera-distance, not a linear dolly
+        const scale = Math.pow(2.5, depth);
+        const opacity = clamp(1 - Math.pow(absD / 1.3, 1.7), 0, 1);
+        const blurOut = depth > 0.3 ? clamp((depth - 0.3) * 9, 0, 11) : 0;
+        const blurIn = depth < -0.7 ? clamp((-0.7 - depth) * 7, 0, 5) : 0;
+        const blur = blurOut || blurIn;
+
+        s.root.style.opacity = opacity.toFixed(3);
+        s.root.style.pointerEvents = absD < 0.4 ? "auto" : "none";
+        s.root.style.zIndex = String(Math.round(30 - absD * 22));
+
+        if (s.word) {
+          s.word.style.transform = `translate(-50%, -50%) scale(${scale.toFixed(3)})`;
+          s.word.style.filter = blur ? `blur(${blur.toFixed(1)}px)` : "none";
+        }
+
+        if (s.deck) {
+          // finale: cards fan out of a stack as the scene reaches center
+          const spread = clamp(1 - absD * 1.5, 0, 1);
+          s.cards.forEach((c, ci) => {
+            if (!c) return;
+            const fan = ci - (SCENES - 1) / 2; // -2 .. 2
+            const tx = fan * 34 * spread * scale;
+            const ty = depth * 46 + (1 - spread) * 10;
+            const rot = fan * 7 * spread;
+            const sc = (0.82 - absD * 0.05) * scale;
+            c.style.transform =
+              `translate(-50%, -50%) translate3d(${tx.toFixed(1)}px, ${ty.toFixed(1)}px, 0) rotate(${rot.toFixed(1)}deg) scale(${sc.toFixed(3)})`;
+            c.style.filter = blur ? `blur(${blur.toFixed(1)}px)` : "none";
+          });
+        } else {
+          s.cards.forEach((c, ci) => {
+            if (!c) return;
+            const slot = CARD_SLOTS[ci];
+            if (!slot) return;
+            const spread = 0.32 + scale * 0.62;
+            const tx = slot.bx * spread;
+            const ty = slot.by * spread;
+            const sc = scale * 0.6;
+            c.style.transform =
+              `translate(-50%, -50%) translate3d(${tx.toFixed(1)}px, ${ty.toFixed(1)}px, 0) rotate(${slot.r}deg) scale(${sc.toFixed(3)})`;
+            c.style.filter = blur ? `blur(${blur.toFixed(1)}px)` : "none";
+          });
+        }
+      });
 
       if (horizonRef.current)
         horizonRef.current.style.opacity = (0.16 + rp * 0.6).toFixed(3);
       if (railRef.current)
-        railRef.current.style.transform = `scaleX(${clamp(rp * (TOTAL - 1) / SCENES, 0, 1).toFixed(4)})`;
+        railRef.current.style.transform = `scaleX(${clamp(rp, 0, 1).toFixed(4)})`;
       if (counterRef.current) {
-        const idx = clamp(Math.round(rp * (TOTAL - 1)) + 1, 1, SCENES);
+        const idx = clamp(Math.round(scrollUnits) + 1, 1, SCENES);
         counterRef.current.textContent =
           String(idx).padStart(2, "0") + " / " + String(SCENES).padStart(2, "0");
       }
@@ -980,7 +983,7 @@ function DomainReel({ reduced }) {
     };
   }, [reduced, SCENES, TOTAL]);
 
-  // reduced motion: no pinning, no film — a plain, readable list
+  // reduced motion: no pinning, no fly-through — a plain, readable list
   if (reduced) {
     return (
       <section className="section" id="domains">
@@ -1006,8 +1009,14 @@ function DomainReel({ reduced }) {
     );
   }
 
-  const registerCard = (meta) => (el) => {
-    if (el) cardRefs.current.push({ el, ...meta });
+  const registerScene = (i) => (el) => {
+    sceneRefs.current[i].root = el;
+  };
+  const registerCard = (i, ci) => (el) => {
+    sceneRefs.current[i].cards[ci] = el;
+  };
+  const registerWord = (i) => (el) => {
+    sceneRefs.current[i].word = el;
   };
 
   return (
@@ -1024,69 +1033,61 @@ function DomainReel({ reduced }) {
         <span className="mono reel-counter" ref={counterRef} aria-hidden="true">01 / 05</span>
         <span className="mono reel-hint" aria-hidden="true">scroll ↓</span>
 
-        <div className="reel-track" ref={trackRef}>
-          {DOMAINS.map((d, si) => (
-            <div className="reel-scene" key={d.word} style={{ top: `${si * 100}vh` }}>
-              <div className="reel-word-wrap">
-                <h3 className="reel-word">
-                  {d.word.split("").map((ch, i) =>
-                    ch === " " ? <br key={i} /> : (
-                      <span key={i} className={i % 3 === 1 ? "ol" : ""}>{ch}</span>
-                    )
-                  )}
-                </h3>
-                <p className="mono reel-caption">{d.caption}</p>
-              </div>
-
-              {d.cards.map((v, k) => {
-                const slot = CARD_SLOTS[k];
-                return (
-                  <div
-                    key={k}
-                    className="reel-card"
-                    ref={registerCard({ scene: si, base: slot.s, speed: slot.speed, r: slot.r })}
-                    style={{ left: slot.left, top: slot.top }}
-                  >
-                    <div className="reel-card-inner">
-                      <Visual name={v} reduced={reduced} />
-                    </div>
-                  </div>
-                );
-              })}
-
-              {d.tags.map((t, ti) => (
-                <span key={t} className={`mono reel-tag reel-tag-${ti}`}>{t}</span>
-              ))}
+        {DOMAINS.map((d, si) => (
+          <div className="reel-scene" key={d.word} ref={registerScene(si)}>
+            <div className="reel-word-wrap" ref={registerWord(si)}>
+              <h3 className="reel-word">
+                {d.word.split("").map((ch, i) =>
+                  ch === " " ? <br key={i} /> : (
+                    <span key={i} className={i % 3 === 1 ? "ol" : ""}>{ch}</span>
+                  )
+                )}
+              </h3>
+              <p className="mono reel-caption">{d.caption}</p>
             </div>
-          ))}
 
-          {/* finale scene: the deck gathers, the toolkit lands, the CTA */}
-          <div className="reel-scene reel-finale-scene" style={{ top: `${SCENES * 100}vh` }}>
-            {DOMAINS.map((d, di) => (
-              <div
-                key={di}
-                className="reel-card deck"
-                ref={registerCard({ scene: SCENES, deck: true, di })}
-              >
+            {d.cards.map((v, k) => (
+              <div key={k} className="reel-card" ref={registerCard(si, k)}>
                 <div className="reel-card-inner">
-                  <Visual name={d.cards[0]} reduced={reduced} />
+                  <Visual name={v} reduced={reduced} />
                 </div>
               </div>
             ))}
 
-            <div className="reel-finale-copy">
-              <span className="mono eyebrow">Domains</span>
-              <h3 className="reel-final-line">From pixels to perception.</h3>
-              <p className="mono reel-final-sub">five domains · one toolkit</p>
-              <ul className="chips reel-chips">
-                {chips.map((c) => (
-                  <li key={c} className="chip">{c}</li>
-                ))}
-              </ul>
-              <ShinyButton onClick={() => goTo("projects")}>
-                See it in the work <ArrowRight size={15} />
-              </ShinyButton>
+            {d.tags.map((t, ti) => (
+              <span key={t} className={`mono reel-tag reel-tag-${ti}`}>{t}</span>
+            ))}
+          </div>
+        ))}
+
+        {/* finale scene: the deck gathers, the toolkit lands, the CTA */}
+        <div
+          className="reel-scene reel-finale-scene"
+          ref={(el) => {
+            registerScene(SCENES)(el);
+            sceneRefs.current[SCENES].deck = true;
+          }}
+        >
+          {DOMAINS.map((d, di) => (
+            <div key={di} className="reel-card deck" ref={registerCard(SCENES, di)}>
+              <div className="reel-card-inner">
+                <Visual name={d.cards[0]} reduced={reduced} />
+              </div>
             </div>
+          ))}
+
+          <div className="reel-finale-copy">
+            <span className="mono eyebrow">Domains</span>
+            <h3 className="reel-final-line">From pixels to perception.</h3>
+            <p className="mono reel-final-sub">five domains · one toolkit</p>
+            <ul className="chips reel-chips">
+              {chips.map((c) => (
+                <li key={c} className="chip">{c}</li>
+              ))}
+            </ul>
+            <ShinyButton onClick={() => goTo("projects")}>
+              See it in the work <ArrowRight size={15} />
+            </ShinyButton>
           </div>
         </div>
 
@@ -1556,7 +1557,13 @@ html, body { margin: 0; padding: 0; background: #08080b; }
   font-weight: 300;
   min-height: 100vh;
   position: relative;
-  overflow-x: hidden;
+  /* NOTE: overflow-x must be clip, not hidden, here. hidden on only one
+     axis forces the UA to compute the other axis as auto, which turns
+     .root into a scroll container — and position: sticky always sticks
+     relative to its nearest scrolling ancestor, not the viewport. That
+     silently broke the pinned domain reel below. clip still clips
+     overflow but never establishes a scroll container. */
+  overflow-x: clip;
   transition: background 500ms ease, color 500ms ease;
 }
 .root.theme-light {
@@ -1979,19 +1986,20 @@ html, body { margin: 0; padding: 0; background: #08080b; }
 }
 .reveal.is-in .section-title::after { transform: scaleX(1); }
 
-/* ---- domain reel (scrubbed filmstrip) ---- */
+/* ---- domain reel (scroll-driven fly-through) ---- */
 .reel-wrap { position: relative; z-index: 1; /* height set inline = TOTAL*100vh */ }
 .reel-stage {
   position: sticky; top: 0; height: 100svh; overflow: hidden;
   perspective: 1400px;
 }
-/* the filmstrip: full height of all scenes, slid continuously by JS */
-.reel-track {
-  position: absolute; inset: 0; will-change: transform;
-}
+
+/* every scene is stacked dead-center on top of every other; JS drives
+   which one is in focus via opacity + z-index each frame — nothing here
+   ever slides, it only grows, fades, and blurs */
 .reel-scene {
-  position: absolute; left: 0; right: 0; height: 100vh;
-  /* top set inline per scene */
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; will-change: opacity;
 }
 
 /* eclipse horizon: a wide arc of light low in frame, brightening with progress */
@@ -2013,9 +2021,11 @@ html, body { margin: 0; padding: 0; background: #08080b; }
   filter: blur(1px); opacity: 0.65;
 }
 
-/* top/bottom vignette — soft cuts so scenes fade at the frame edges (filmic) */
+/* top/bottom vignette — soft cuts so scenes fade at the frame edges (filmic).
+   Sits above every .reel-scene (z-index 10-30) so the fly-through always
+   reads as happening inside a framed shot. */
 .reel-vignette {
-  position: absolute; inset: 0; z-index: 5; pointer-events: none;
+  position: absolute; inset: 0; z-index: 35; pointer-events: none;
   background:
     linear-gradient(to bottom, var(--bg) 0%, transparent 22%),
     linear-gradient(to top, var(--bg) 0%, transparent 22%);
@@ -2028,20 +2038,23 @@ html, body { margin: 0; padding: 0; background: #08080b; }
 
 /* HUD */
 .reel-counter {
-  position: absolute; top: 90px; left: clamp(16px, 4vw, 52px); z-index: 6;
+  position: absolute; top: 90px; left: clamp(16px, 4vw, 52px); z-index: 40;
   font-size: 11px; letter-spacing: 0.2em; color: var(--muted);
 }
 .reel-hint {
-  position: absolute; top: 90px; right: clamp(16px, 4vw, 52px); z-index: 6;
+  position: absolute; top: 90px; right: clamp(16px, 4vw, 52px); z-index: 40;
   font-size: 10px; letter-spacing: 0.3em; text-transform: uppercase; color: var(--muted);
   animation: hintNudge 2.2s ease-in-out infinite;
 }
 @keyframes hintNudge { 0%,100% { opacity: 0.5; transform: translateY(0); } 50% { opacity: 1; transform: translateY(4px); } }
 
-/* the giant word — big, behind the cards, part solid part outlined */
+/* the giant word — big, behind the cards, part solid part outlined.
+   Base position is dead-center; JS overrides transform (scale) and
+   filter (blur) every frame to sell the camera-distance illusion. */
 .reel-word-wrap {
   position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
   z-index: 2; text-align: center; width: 92vw; pointer-events: none;
+  will-change: transform, filter;
 }
 .reel-word {
   margin: 0; text-transform: uppercase;
@@ -2057,9 +2070,10 @@ html, body { margin: 0; padding: 0; background: #08080b; }
   margin: 20px 0 0; font-size: 11.5px; letter-spacing: 0.16em; color: var(--muted); text-transform: uppercase;
 }
 
-/* the cards — sharp, in front of the word; JS sets transform+opacity each frame */
+/* the cards — sharp, in front of the word, resting dead-center; JS moves
+   each one out along its own radial slot and scales/blurs it every frame */
 .reel-card {
-  position: absolute; z-index: 3;
+  position: absolute; left: 50%; top: 50%;
   width: clamp(150px, 15vw, 224px); aspect-ratio: 1;
   border-radius: 24px; overflow: hidden;
   background: linear-gradient(150deg, rgba(255,255,255,0.06), rgba(14,14,20,0.34) 60%);
@@ -2069,13 +2083,14 @@ html, body { margin: 0; padding: 0; background: #08080b; }
   backdrop-filter: blur(5px) saturate(150%);
   -webkit-backdrop-filter: blur(5px) saturate(150%);
   display: grid; place-items: center;
-  opacity: 0; will-change: transform, opacity;
+  transform: translate(-50%, -50%) scale(0.4);
+  will-change: transform, filter;
 }
 .reel-card-inner { width: 78%; height: 78%; display: grid; place-items: center; }
 
 /* finale deck cards: centered, stacked, JS fans them out */
 .reel-card.deck {
-  left: 50%; top: 45%; z-index: 3;
+  top: 46%;
   width: clamp(160px, 17vw, 232px);
 }
 
@@ -2103,7 +2118,7 @@ html, body { margin: 0; padding: 0; background: #08080b; }
 .reel-tag-2 { left: 46vw; top: 22vh; }
 
 .reel-rail {
-  position: absolute; bottom: 26px; left: 50%; transform: translateX(-50%); z-index: 6;
+  position: absolute; bottom: 26px; left: 50%; transform: translateX(-50%); z-index: 40;
   width: min(320px, 60vw); height: 2px; background: var(--line); border-radius: 999px; overflow: hidden;
 }
 .reel-rail span {
