@@ -189,6 +189,48 @@ const CURRENTLY = [
   "shipping: FastAPI Backends",
 ];
 
+/* the scroll-film chapters — countries become domains.
+   Each card: v = visual name, x/y = resting offset from center, r = tilt. */
+const DOMAINS = [
+  {
+    word: "Computer Vision",
+    caption: "teaching machines to see",
+    cards: [
+      { v: "retina", x: "-30vw", y: "-6vh", r: -6 },
+      { v: "face", x: "29vw", y: "8vh", r: 5 },
+    ],
+  },
+  {
+    word: "Deep Learning",
+    caption: "94.2% accuracy · published at ICASET 2025",
+    cards: [
+      { v: "net", x: "-29vw", y: "9vh", r: 5 },
+      { v: "loss", x: "30vw", y: "-7vh", r: -4 },
+    ],
+  },
+  {
+    word: "3D Reconstruction",
+    caption: "video in, geometry out · Auriga IT",
+    cards: [
+      { v: "cloud", x: "-31vw", y: "-4vh", r: -5 },
+      { v: "mesh", x: "29vw", y: "10vh", r: 6 },
+    ],
+  },
+  {
+    word: "Multimodal AI",
+    caption: "image ⇄ text, one embedding space",
+    cards: [
+      { v: "xmodal", x: "-29vw", y: "7vh", r: 4 },
+      { v: "tokens", x: "30vw", y: "-8vh", r: -5 },
+    ],
+  },
+  {
+    word: "Agentic AI",
+    caption: "plan → act → observe · where I'm headed",
+    cards: [{ v: "agent", x: "-30vw", y: "-2vh", r: -4 }],
+  },
+];
+
 /* ------------------------------------------------------------------ */
 /* hooks                                                               */
 /* ------------------------------------------------------------------ */
@@ -279,6 +321,39 @@ function useScrollProgress() {
       cancelAnimationFrame(raf);
     };
   }, []);
+}
+
+// Progress through a tall pinned wrapper: 0 when its top hits the viewport
+// top, 1 when its bottom leaves. Writes --rp to the wrapper (continuous,
+// no re-render) and returns the current segment index (state, discrete).
+function useReelProgress(wrapRef, segments) {
+  const [seg, setSeg] = useState(0);
+  useEffect(() => {
+    const el = wrapRef.current;
+    if (!el) return;
+    let raf = 0;
+    const update = () => {
+      raf = 0;
+      const r = el.getBoundingClientRect();
+      const total = r.height - window.innerHeight;
+      const p = total > 0 ? Math.min(Math.max(-r.top / total, 0), 1) : 0;
+      el.style.setProperty("--rp", p.toFixed(4));
+      const s = Math.min(Math.floor(p * segments), segments - 1);
+      setSeg((prev) => (prev === s ? prev : s));
+    };
+    const onScroll = () => {
+      if (!raf) raf = requestAnimationFrame(update);
+    };
+    update();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+      cancelAnimationFrame(raf);
+    };
+  }, [wrapRef, segments]);
+  return seg;
 }
 
 function Reveal({ children, delay = 0, as: Tag = "div", className = "", ...rest }) {
@@ -657,6 +732,38 @@ function CartDash() {
   );
 }
 
+// agentic AI: plan → act → observe loop around an LLM core,
+// dashed arcs marching, tool call ticking underneath
+function AgentGraph() {
+  const ring = [
+    { label: "plan", x: 110, y: 30 },
+    { label: "act", x: 186, y: 138 },
+    { label: "observe", x: 34, y: 138 },
+  ];
+  const arcs = [
+    "M 124 40 Q 186 62 184 122",   // plan → act
+    "M 170 148 Q 110 182 50 148",  // act → observe
+    "M 36 122 Q 34 62 96 40",      // observe → plan
+  ];
+  return (
+    <svg viewBox="0 0 220 200" className="viz">
+      {arcs.map((d, i) => (
+        <path key={d} d={d} className="agent-arc" style={{ animationDelay: `${i * 0.2}s` }} />
+      ))}
+      {ring.map((n) => (
+        <g key={n.label}>
+          <line x1="110" y1="96" x2={n.x} y2={n.y} className="agent-spoke" />
+          <circle cx={n.x} cy={n.y} r="14" className="agent-node" />
+          <text x={n.x} y={n.y + 3.5} textAnchor="middle" className="agent-lbl">{n.label}</text>
+        </g>
+      ))}
+      <circle cx="110" cy="96" r="21" className="agent-core" />
+      <text x="110" y="100" textAnchor="middle" className="agent-lbl agent-lbl-core">LLM</text>
+      <text x="66" y="192" className="mono-tick">tool: retrieve(query)</text>
+    </svg>
+  );
+}
+
 const VISUALS = {
   net: NeuralNet,
   retina: RetinaScan,
@@ -670,6 +777,7 @@ const VISUALS = {
   clinic: ClinicVisit,
   xmodal: CrossModalLoop,
   cart: CartDash,
+  agent: AgentGraph,
 };
 
 function Visual({ name, reduced }) {
@@ -798,25 +906,121 @@ function Typewriter({ words = ROTATING }) {
 }
 
 /* ------------------------------------------------------------------ */
-/* lamp header — CSS recreation of the Aceternity lamp, theme accents  */
+/* domain reel — a pinned scroll-film through the tech domains.        */
+/* Countries in the reference become domains; the photography becomes  */
+/* the site's own live ML visuals. Native scroll, no hijacking: a tall */
+/* wrapper + sticky stage, progress drives everything.                 */
 /* ------------------------------------------------------------------ */
 
-function LampTitle({ eyebrow, children }) {
-  const [ref, shown] = useReveal();
+function DomainReel({ reduced }) {
+  const wrapRef = useRef(null);
+  const segments = DOMAINS.length + 1; // +1 = deck-gather finale
+  const seg = useReelProgress(wrapRef, segments);
+  const finale = seg >= DOMAINS.length;
+  const chips = SKILLS.flatMap((g) => g.items);
+
+  // reduced motion: no pinning, no film — a plain, readable list
+  if (reduced) {
+    return (
+      <section className="section" id="domains">
+        <span className="mono eyebrow">Domains</span>
+        <h2 className="section-title">What I work in</h2>
+        <div className="skills">
+          {DOMAINS.map((d) => (
+            <div key={d.word} className="panel skill-group">
+              <h3 className="mono skill-title">{d.word}</h3>
+              <p className="project-blurb">{d.caption}</p>
+            </div>
+          ))}
+          <div className="panel skill-group">
+            <h3 className="mono skill-title">Toolkit</h3>
+            <ul className="chips">
+              {chips.map((c) => (
+                <li key={c} className="chip">{c}</li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  let cardIndex = -1;
+
   return (
-    <div ref={ref} className={`lamp ${shown ? "is-lit" : ""}`}>
-      <div className="lamp-stage" aria-hidden="true">
-        <div className="lamp-halo" />
-        <div className="lamp-cone lamp-cone-l" />
-        <div className="lamp-cone lamp-cone-r" />
-        <div className="lamp-spark" />
-        <div className="lamp-line" />
+    <section className="reel-wrap" id="domains" ref={wrapRef}>
+      <div className={`reel-stage ${finale ? "is-finale" : ""}`}>
+        {/* glowing horizon, brightens as the film advances */}
+        <div className="reel-horizon" aria-hidden="true" />
+
+        <span className="mono reel-counter" aria-hidden="true">
+          {String(Math.min(seg + 1, DOMAINS.length)).padStart(2, "0")} / {String(DOMAINS.length).padStart(2, "0")}
+        </span>
+        <span className="mono reel-hint" aria-hidden="true">scroll</span>
+
+        {/* chapter words + captions */}
+        {DOMAINS.map((d, ci) => (
+          <div
+            key={d.word}
+            className={`reel-chapter ${ci === seg ? "is-active" : ci < seg ? "is-past" : ""}`}
+            aria-hidden={ci !== seg}
+          >
+            <h3 className="reel-word">
+              {d.word.split("").map((ch, i) =>
+                ch === " " ? <br key={i} /> : (
+                  <span key={i} className={i % 3 === 1 ? "ol" : ""}>{ch}</span>
+                )
+              )}
+            </h3>
+            <p className="mono reel-caption">{d.caption}</p>
+          </div>
+        ))}
+
+        {/* the cards — scattered per chapter, gathered into a deck at the end */}
+        {DOMAINS.map((d, ci) =>
+          d.cards.map((c, k) => {
+            cardIndex += 1;
+            return (
+              <div
+                key={`${ci}-${c.v}`}
+                data-k={k}
+                className={`reel-card ${ci === seg ? "is-active" : ci < seg ? "is-past" : ""}`}
+                style={{
+                  "--tx": c.x,
+                  "--ty": c.y,
+                  "--cr": `${c.r}deg`,
+                  "--dr": `${cardIndex * 3.5 - 14}deg`,
+                  zIndex: 5 + cardIndex,
+                }}
+              >
+                <div className="reel-card-inner">
+                  <Visual name={c.v} reduced={reduced} />
+                </div>
+              </div>
+            );
+          })
+        )}
+
+        {/* finale: closing line + the whole toolkit + CTA */}
+        <div className="reel-finale">
+          <h3 className="reel-final-line">From pixels to perception.</h3>
+          <p className="mono reel-final-sub">five domains · one toolkit</p>
+          <ul className="chips reel-chips">
+            {chips.map((c) => (
+              <li key={c} className="chip">{c}</li>
+            ))}
+          </ul>
+          <ShinyButton onClick={() => goTo("projects")}>
+            See it in the work <ArrowRight size={15} />
+          </ShinyButton>
+        </div>
+
+        {/* progress rail */}
+        <div className="reel-rail" aria-hidden="true">
+          <span style={{ transform: `scaleX(${Math.min((seg + 1) / DOMAINS.length, 1)})` }} />
+        </div>
       </div>
-      <div className="lamp-copy">
-        <span className="mono eyebrow">{eyebrow}</span>
-        <h2 className="section-title">{children}</h2>
-      </div>
-    </div>
+    </section>
   );
 }
 
@@ -825,9 +1029,9 @@ function LampTitle({ eyebrow, children }) {
 /* ------------------------------------------------------------------ */
 
 const NAV = [
-  ["Projects", "projects"],
+  ["Domains", "domains"],
   ["Experience", "experience"],
-  ["Skills", "skills"],
+  ["Projects", "projects"],
   ["Contact", "contact"],
 ];
 
@@ -1146,6 +1350,9 @@ export default function Portfolio() {
         {/* ---------------- about ---------------- */}
         <About spotlight={parallaxOn} />
 
+        {/* ---------------- domain reel (replaces Skills) ---------------- */}
+        <DomainReel reduced={reduced} />
+
         {/* ---------------- experience ---------------- */}
         <section className="section" id="experience">
           <Reveal>
@@ -1181,25 +1388,6 @@ export default function Portfolio() {
           <div className="grid">
             {PROJECTS.map((p, i) => (
               <ProjectCard key={p.title} p={p} reduced={reduced} i={i} />
-            ))}
-          </div>
-        </section>
-
-        {/* ---------------- skills ---------------- */}
-        <section className="section" id="skills">
-          <LampTitle eyebrow="Toolkit">What I reach for</LampTitle>
-          <div className="skills">
-            {SKILLS.map((s, i) => (
-              <Reveal as="div" key={s.group} className="panel skill-group" delay={i * 60}>
-                <h3 className="mono skill-title">{s.group}</h3>
-                <ul className="chips">
-                  {s.items.map((it) => (
-                    <li key={it} className="chip chip-lift">
-                      {it}
-                    </li>
-                  ))}
-                </ul>
-              </Reveal>
             ))}
           </div>
         </section>
@@ -1717,71 +1905,162 @@ html, body { margin: 0; padding: 0; background: #08080b; }
 }
 .reveal.is-in .section-title::after { transform: scaleX(1); }
 
-/* ---- lamp header ---- */
-.lamp {
-  --lamp-w: min(480px, 78vw);
-  --cone-w: min(260px, 38vw);
-  position: relative; display: flex; flex-direction: column; align-items: center;
-  text-align: center; margin-bottom: 24px;
+/* ---- domain reel ---- */
+.reel-wrap {
+  position: relative; z-index: 1;
+  height: calc(6 * 110vh);
 }
-.lamp-stage { position: relative; width: 100%; height: 150px; pointer-events: none; }
-.lamp-stage > * { position: absolute; left: 50%; }
-/* wide soft ambience above the line */
-.lamp-halo {
-  top: 26px; width: 300px; height: 130px; margin-left: -150px; border-radius: 999px;
-  background: var(--accent); filter: blur(56px);
-  opacity: 0; transition: opacity 1000ms ease 150ms;
+@media (max-width: 767px) { .reel-wrap { height: calc(6 * 85vh); } }
+.reel-stage {
+  position: sticky; top: 0; height: 100svh; overflow: hidden;
 }
-.lamp.is-lit .lamp-halo { opacity: 0.32; }
-/* the light cones fanning down from the line */
-.lamp-cone {
-  top: 92px; width: var(--cone-w); height: 170px;
-  opacity: 0; transform: scaleY(0.55); transform-origin: center top;
-  transition: opacity 900ms ease 120ms, transform 1100ms cubic-bezier(0.16,1,0.3,1) 120ms;
+
+/* the eclipse horizon: a wide arc of light low in the frame that
+   brightens as the film advances */
+.reel-horizon {
+  position: absolute; left: 50%; bottom: -52vh;
+  width: 170vw; height: 90vh; transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(closest-side,
+    color-mix(in srgb, var(--accent) 60%, transparent),
+    color-mix(in srgb, var(--accent-2) 24%, transparent) 55%,
+    transparent 72%);
+  filter: blur(36px);
+  opacity: calc(0.22 + var(--rp, 0) * 0.5);
+  pointer-events: none;
 }
-.lamp-cone-l {
-  margin-left: calc(-1 * var(--cone-w));
-  background: conic-gradient(from 180deg at 100% 0%, color-mix(in srgb, var(--accent) 55%, transparent) 0deg, transparent 62deg);
-  -webkit-mask-image: radial-gradient(130% 130% at 100% 0%, #000 28%, transparent 76%);
-  mask-image: radial-gradient(130% 130% at 100% 0%, #000 28%, transparent 76%);
+.reel-horizon::after {
+  content: ''; position: absolute; inset: 6% 10%;
+  border-radius: 50%;
+  border-top: 2px solid color-mix(in srgb, var(--accent-2) 85%, transparent);
+  filter: blur(1.5px);
+  opacity: 0.7;
 }
-.lamp-cone-r {
-  background: conic-gradient(from 90deg at 0% 0%, transparent 28deg, color-mix(in srgb, var(--accent) 55%, transparent) 90deg);
-  -webkit-mask-image: radial-gradient(130% 130% at 0% 0%, #000 28%, transparent 76%);
-  mask-image: radial-gradient(130% 130% at 0% 0%, #000 28%, transparent 76%);
+
+.reel-counter {
+  position: absolute; top: 92px; left: clamp(16px, 4vw, 48px); z-index: 6;
+  font-size: 11px; letter-spacing: 0.2em; color: var(--muted);
 }
-.lamp.is-lit .lamp-cone { opacity: 0.75; transform: scaleY(1); }
-/* hot core just under the line */
-.lamp-spark {
-  top: 72px; width: 230px; height: 56px; margin-left: -115px; border-radius: 999px;
-  background: var(--accent-2); filter: blur(26px);
-  opacity: 0; transition: opacity 900ms ease 200ms;
+.reel-hint {
+  position: absolute; top: 92px; right: clamp(16px, 4vw, 48px); z-index: 6;
+  font-size: 10px; letter-spacing: 0.3em; text-transform: uppercase; color: var(--muted);
+  animation: hintNudge 2.2s ease-in-out infinite;
 }
-.lamp.is-lit .lamp-spark { opacity: 0.45; }
-/* the lamp tube itself — expands when lit */
-.lamp-line {
-  top: 90px; height: 2px; width: var(--lamp-w); margin-left: calc(var(--lamp-w) / -2);
-  border-radius: 999px;
-  background: linear-gradient(90deg, transparent, var(--accent-2) 22%, var(--accent) 50%, var(--accent-2) 78%, transparent);
-  box-shadow: 0 0 18px var(--accent-2), 0 0 44px color-mix(in srgb, var(--accent) 55%, transparent);
-  opacity: 0.35; transform: scaleX(0.4);
-  transition: opacity 900ms ease, transform 1100ms cubic-bezier(0.16,1,0.3,1);
+@keyframes hintNudge { 0%,100% { transform: translateY(0); opacity: 0.5; } 50% { transform: translateY(4px); opacity: 1; } }
+
+/* chapter words */
+.reel-chapter {
+  position: absolute; inset: 0; z-index: 3;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; padding: 0 16px; pointer-events: none;
+  opacity: 0; transform: translateY(9vh);
+  transition: opacity 650ms ease, transform 900ms cubic-bezier(0.16,1,0.3,1);
 }
-.lamp.is-lit .lamp-line { opacity: 1; transform: scaleX(1); }
-/* title rises into the light */
-.lamp-copy {
-  position: relative; z-index: 1; margin-top: -34px;
-  opacity: 0; transform: translateY(26px);
-  transition: opacity 800ms ease 260ms, transform 900ms cubic-bezier(0.16,1,0.3,1) 260ms;
+.reel-chapter.is-active { opacity: 1; transform: none; }
+.reel-chapter.is-past { opacity: 0; transform: translateY(-9vh); }
+.reel-stage.is-finale .reel-chapter { opacity: 0; }
+.reel-word {
+  margin: 0; text-transform: uppercase;
+  font-size: min(9vw, 6.2rem);
+  font-weight: 800; letter-spacing: -0.03em; line-height: 0.95;
+  background: linear-gradient(180deg, var(--fg), color-mix(in srgb, var(--fg) 45%, transparent));
+  -webkit-background-clip: text; background-clip: text; color: transparent;
 }
-.lamp.is-lit .lamp-copy { opacity: 1; transform: none; }
-.lamp .section-title { margin-bottom: 0; }
-.lamp .section-title::after { display: none; }
-.theme-light .lamp-halo { filter: blur(64px); }
-.theme-light .lamp.is-lit .lamp-halo { opacity: 0.2; }
-.theme-light .lamp.is-lit .lamp-spark { opacity: 0.3; }
-.reveal { opacity: 0; transform: translateY(42px) scale(0.975); transition: opacity 800ms cubic-bezier(0.16,1,0.3,1), transform 800ms cubic-bezier(0.16,1,0.3,1); }
-.reveal.is-in { opacity: 1; transform: none; }
+/* outlined letters — the mixed solid/stroke typography from the reference */
+.reel-word .ol {
+  background: none; color: transparent;
+  -webkit-text-stroke: 2px color-mix(in srgb, var(--fg) 80%, transparent);
+}
+.reel-caption { margin: 18px 0 0; font-size: 11.5px; letter-spacing: 0.14em; color: var(--muted); text-transform: uppercase; }
+
+/* the cards: rest position per chapter via --tx/--ty/--cr; enter from below,
+   exit upward; in the finale everything converges into a rotated deck */
+.reel-card {
+  position: absolute; left: 50%; top: 50%; z-index: 4;
+  width: min(250px, 34vw); height: min(250px, 34vw);
+  border-radius: 26px; overflow: hidden;
+  background: linear-gradient(150deg, rgba(255,255,255,0.05), rgba(14,14,20,0.30) 60%);
+  border: 1px solid rgba(255,255,255,0.14);
+  border-top-color: rgba(255,255,255,0.30);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(4px) saturate(150%);
+  -webkit-backdrop-filter: blur(4px) saturate(150%);
+  display: grid; place-items: center;
+  opacity: 0;
+  transform: translate(-50%, -50%) translate3d(var(--tx), calc(var(--ty) + 55vh), 0) rotate(var(--cr)) scale(0.92);
+  transition: transform 950ms cubic-bezier(0.16,1,0.3,1), opacity 550ms ease;
+}
+.reel-card.is-active {
+  opacity: 1;
+  transform: translate(-50%, -50%) translate3d(var(--tx), var(--ty), 0) rotate(var(--cr));
+}
+.reel-card.is-past {
+  opacity: 0;
+  transform: translate(-50%, -50%) translate3d(var(--tx), calc(var(--ty) - 50vh), 0) rotate(var(--cr)) scale(0.92);
+}
+.reel-card-inner { width: 76%; height: 76%; display: grid; place-items: center; }
+/* SVG animations idle while a card is hidden */
+.reel-card:not(.is-active) svg *, .reel-card:not(.is-active) .token { animation-play-state: paused; }
+.reel-stage.is-finale .reel-card svg *, .reel-stage.is-finale .reel-card .token { animation-play-state: running; }
+
+/* finale: the deck gather */
+.reel-stage.is-finale .reel-card {
+  opacity: 1;
+  transform: translate(-50%, -50%) translate3d(var(--deck-x, -22vw), 0, 0) rotate(var(--dr)) scale(0.8);
+}
+.reel-finale {
+  position: absolute; z-index: 5;
+  right: clamp(16px, 7vw, 96px); top: 50%; transform: translateY(-50%) translateY(24px);
+  width: min(440px, 84vw);
+  opacity: 0; pointer-events: none;
+  transition: opacity 700ms ease 150ms, transform 900ms cubic-bezier(0.16,1,0.3,1) 150ms;
+}
+.reel-stage.is-finale .reel-finale { opacity: 1; pointer-events: auto; transform: translateY(-50%); }
+.reel-final-line {
+  margin: 0 0 10px; font-size: clamp(1.6rem, 3.6vw, 2.5rem);
+  font-weight: 700; letter-spacing: -0.03em; line-height: 1.1;
+}
+.reel-final-sub { margin: 0 0 18px; font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); }
+.reel-chips { margin-bottom: 22px; max-height: 34vh; overflow: hidden; }
+.reel-chips .chip { font-size: 10px; padding: 4px 9px; }
+
+@media (max-width: 767px) {
+  .reel-card { --tx: 0 !important; --ty: -22vh !important; width: 46vw; height: 46vw; }
+  .reel-card[data-k="1"] { display: none; }
+  .reel-chapter { justify-content: flex-end; padding-bottom: 22vh; }
+  .reel-stage.is-finale .reel-card {
+    transform: translate(-50%, -50%) translate3d(0, -24vh, 0) rotate(var(--dr)) scale(0.55);
+  }
+  .reel-finale {
+    right: 16px; left: 16px; width: auto; top: auto; bottom: 8vh;
+    transform: translateY(24px); text-align: center;
+  }
+  .reel-stage.is-finale .reel-finale { transform: none; }
+  .reel-chips { justify-content: center; max-height: 22vh; }
+  .reel-counter, .reel-hint { top: 76px; }
+}
+
+.reel-rail {
+  position: absolute; bottom: 26px; left: 50%; transform: translateX(-50%); z-index: 6;
+  width: min(320px, 60vw); height: 2px; background: var(--line); border-radius: 999px; overflow: hidden;
+}
+.reel-rail span {
+  display: block; height: 100%; transform-origin: left; transform: scaleX(0);
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+  transition: transform 500ms cubic-bezier(0.16,1,0.3,1);
+}
+
+/* agent graph visual */
+.agent-core { fill: color-mix(in srgb, var(--accent) 16%, transparent); stroke: var(--accent); stroke-width: 1.6; }
+.agent-node { fill: color-mix(in srgb, var(--accent-2) 14%, transparent); stroke: var(--accent-2); stroke-width: 1.3; animation: nodePulse 2.8s ease-in-out infinite; }
+.agent-spoke { stroke: var(--line); stroke-width: 1; }
+.agent-arc {
+  fill: none; stroke: var(--accent); stroke-width: 1.6; stroke-linecap: round;
+  stroke-dasharray: 6 7; animation: march 1.1s linear infinite; opacity: 0.8;
+}
+@keyframes march { to { stroke-dashoffset: -26; } }
+.agent-lbl { font-family: 'JetBrains Mono', monospace; font-size: 8.5px; fill: var(--fg); }
+.agent-lbl-core { font-size: 9.5px; font-weight: 500; }
 
 /* ---- scroll-driven atmosphere ---- */
 .scroll-rail { position: fixed; top: 0; left: 0; right: 0; height: 2px; z-index: 70; pointer-events: none; }
@@ -1875,7 +2154,7 @@ html, body { margin: 0; padding: 0; background: #08080b; }
 }
 .project-links { display: flex; flex-wrap: wrap; gap: 8px; margin-top: auto; padding-top: 6px; }
 
-/* ---- skills ---- */
+/* ---- skills (kept for the reduced-motion fallback of the reel) ---- */
 .skills { display: grid; gap: 16px; }
 @media (min-width: 720px) { .skills { grid-template-columns: 1fr 1fr; } }
 .skill-group { padding: 22px; }
