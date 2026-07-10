@@ -915,20 +915,20 @@ function DomainReel({ reduced }) {
           return;
         }
 
-        // exponential scale reads as camera-distance, not a linear dolly
+        // exponential scale reads as camera-distance, not a linear dolly.
+        // No filter: blur() here — animating CSS blur every frame, across
+        // a dozen-plus overlapping glass cards, is one of the most
+        // expensive things a browser can repaint. Scale + opacity alone
+        // sells the "flying past" read at a fraction of the cost.
         const scale = Math.pow(2.5, depth);
         const opacity = clamp(1 - Math.pow(absD / 1.3, 1.7), 0, 1);
-        const blurOut = depth > 0.3 ? clamp((depth - 0.3) * 9, 0, 11) : 0;
-        const blurIn = depth < -0.7 ? clamp((-0.7 - depth) * 7, 0, 5) : 0;
-        const blur = blurOut || blurIn;
 
         s.root.style.opacity = opacity.toFixed(3);
         s.root.style.pointerEvents = absD < 0.4 ? "auto" : "none";
         s.root.style.zIndex = String(Math.round(30 - absD * 22));
 
         if (s.word) {
-          s.word.style.transform = `translate(-50%, -50%) scale(${scale.toFixed(3)})`;
-          s.word.style.filter = blur ? `blur(${blur.toFixed(1)}px)` : "none";
+          s.word.style.transform = `translate3d(-50%, -50%, 0) scale(${scale.toFixed(3)})`;
         }
 
         if (s.deck) {
@@ -942,8 +942,7 @@ function DomainReel({ reduced }) {
             const rot = fan * 7 * spread;
             const sc = (0.82 - absD * 0.05) * scale;
             c.style.transform =
-              `translate(-50%, -50%) translate3d(${tx.toFixed(1)}px, ${ty.toFixed(1)}px, 0) rotate(${rot.toFixed(1)}deg) scale(${sc.toFixed(3)})`;
-            c.style.filter = blur ? `blur(${blur.toFixed(1)}px)` : "none";
+              `translate3d(calc(-50% + ${tx.toFixed(1)}px), calc(-50% + ${ty.toFixed(1)}px), 0) rotate(${rot.toFixed(1)}deg) scale(${sc.toFixed(3)})`;
           });
         } else {
           s.cards.forEach((c, ci) => {
@@ -955,8 +954,7 @@ function DomainReel({ reduced }) {
             const ty = slot.by * spread;
             const sc = scale * 0.6;
             c.style.transform =
-              `translate(-50%, -50%) translate3d(${tx.toFixed(1)}px, ${ty.toFixed(1)}px, 0) rotate(${slot.r}deg) scale(${sc.toFixed(3)})`;
-            c.style.filter = blur ? `blur(${blur.toFixed(1)}px)` : "none";
+              `translate3d(calc(-50% + ${tx.toFixed(1)}px), calc(-50% + ${ty.toFixed(1)}px), 0) rotate(${slot.r}deg) scale(${sc.toFixed(3)})`;
           });
         }
       });
@@ -2076,15 +2074,21 @@ html, body { margin: 0; padding: 0; background: #08080b; }
   position: absolute; left: 50%; top: 50%;
   width: clamp(150px, 15vw, 224px); aspect-ratio: 1;
   border-radius: 24px; overflow: hidden;
-  background: linear-gradient(150deg, rgba(255,255,255,0.06), rgba(14,14,20,0.34) 60%);
+  /* solid-ish glass, not backdrop-filter: blur() — recomputing a live
+     backdrop blur every frame while the element also moves/scales is
+     one of the costliest things a browser can do, and with a dozen-plus
+     of these on screen at once it's what was causing the scroll jank. */
+  background: linear-gradient(150deg, rgba(255,255,255,0.09), rgba(12,12,18,0.86) 60%);
   border: 1px solid rgba(255,255,255,0.14);
   border-top-color: rgba(255,255,255,0.32);
   box-shadow: var(--shadow);
-  backdrop-filter: blur(5px) saturate(150%);
-  -webkit-backdrop-filter: blur(5px) saturate(150%);
   display: grid; place-items: center;
-  transform: translate(-50%, -50%) scale(0.4);
-  will-change: transform, filter;
+  transform: translate3d(-50%, -50%, 0) scale(0.4);
+  will-change: transform, opacity;
+  contain: layout style paint;
+}
+.theme-light .reel-card {
+  background: linear-gradient(150deg, rgba(255,255,255,0.92), rgba(230,230,238,0.94) 60%);
 }
 .reel-card-inner { width: 78%; height: 78%; display: grid; place-items: center; }
 
