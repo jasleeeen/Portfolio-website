@@ -216,6 +216,12 @@ const CARD_SLOTS = [
   { bx: -170, by: 205, r: 7 },
 ];
 
+// vh of page height consumed per scene in the reel. The visual timing lives in
+// scene-units (d = cam - scene) and is fully independent of this number, so
+// lowering it only shortens how far you have to scroll to advance — not the
+// animation. 100 was the original (a full viewport per scene → felt endless).
+const SCENE_VH = 58;
+
 /* ------------------------------------------------------------------ */
 /* hooks                                                               */
 /* ------------------------------------------------------------------ */
@@ -993,9 +999,12 @@ function DomainReel({ reduced }) {
       const cam = p * (TOTAL - 1);
       const nearest = Math.round(cam);
       if (Math.abs(cam - nearest) < 0.02) return; // already on a chapter
-      // wrapper height = TOTAL*100vh, so scene i sits exactly i*vh past its top
+      // Land the camera exactly on scene `nearest`. cam = p*(TOTAL-1) and
+      // p = (scrollY - wrapTop)/total, so the scrollY that puts cam == nearest
+      // is wrapTop + (nearest/(TOTAL-1)) * total. This is spacing-independent,
+      // so it stays correct no matter what SCENE_VH is set to.
       const wrapTop = window.scrollY + r.top;
-      snapTo(wrapTop + nearest * vh);
+      snapTo(wrapTop + (nearest / (TOTAL - 1)) * total);
     };
 
     const onScroll = () => {
@@ -1060,7 +1069,7 @@ function DomainReel({ reduced }) {
       className="reel-wrap"
       id="domains"
       ref={wrapRef}
-      style={{ height: `${TOTAL * 100}vh` }}
+      style={{ height: `${TOTAL * SCENE_VH}vh` }}
     >
       <div className="reel-stage" ref={stageRef}>
         <div className="reel-horizon" ref={horizonRef} aria-hidden="true" />
@@ -1384,8 +1393,25 @@ export default function Portfolio() {
   const panelRef = useRef(null);
   const dotRef = useRef(null);
   const auraRef = useRef(null);
+  const headerRef = useRef(null);
   const { target, smooth, raw } = usePointer(parallaxOn);
   const rawSmooth = useRef({ x: 0, y: 0, ax: 0, ay: 0 });
+
+  // Pause the hero's floating-card animations once the hero is fully scrolled
+  // out of view. ~13 blurred backdrop-filter panels animating the whole time
+  // you read the rest of the page is a real cost on mid-tier laptops; there's
+  // no reason to keep compositing them off-screen.
+  const [heroInView, setHeroInView] = useState(true);
+  useEffect(() => {
+    const el = headerRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      ([e]) => setHeroInView(e.isIntersecting),
+      { threshold: 0 }
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
 
   useEffect(() => {
     if (!parallaxOn) return;
@@ -1433,8 +1459,12 @@ export default function Portfolio() {
       <Nav dark={dark} setDark={setDark} />
 
       {/* ---------------- hero ---------------- */}
-      <header className="hero">
-        <div className="hero-canvas" ref={canvasRef} aria-hidden="true">
+      <header className="hero" ref={headerRef}>
+        <div
+          className={`hero-canvas ${heroInView ? "" : "floaters-paused"}`}
+          ref={canvasRef}
+          aria-hidden="true"
+        >
           <FloatingCards reduced={reduced} />
         </div>
 
@@ -1633,6 +1663,22 @@ html, body { margin: 0; padding: 0; background: #08080b; }
 }
 .mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
 
+/* ---- shared scroll-reveal ----
+   The wrapper starts hidden and slightly low, then fades + rises into place
+   when useReveal() adds .is-in. The per-element transition-delay set inline by
+   <Reveal delay=…> staggers siblings. (This base rule was missing before, so
+   every reveal — About, Experience, Projects, Certs, Contact — popped in with
+   no animation at all.) */
+.reveal {
+  opacity: 0;
+  transform: translateY(22px);
+  transition:
+    opacity 820ms cubic-bezier(0.16, 1, 0.3, 1),
+    transform 820ms cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
+}
+.reveal.is-in { opacity: 1; transform: none; }
+
 /* ---- ambient blobs ---- */
 .blobs {
   position: fixed; inset: -20vh 0; z-index: 0; pointer-events: none; overflow: hidden;
@@ -1732,6 +1778,9 @@ html, body { margin: 0; padding: 0; background: #08080b; }
   width: 180vw; height: 180vh; z-index: 0; pointer-events: none;
   will-change: transform;
 }
+/* off-screen: stop compositing/animating the floating cards */
+.hero-canvas.floaters-paused,
+.hero-canvas.floaters-paused * { animation-play-state: paused !important; }
 @media (max-width: 767px) {
   .hero-canvas { top: -10vh; left: 0; width: 100vw; height: 120vh; opacity: 0.5; }
 }
