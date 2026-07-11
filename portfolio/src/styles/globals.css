@@ -20,7 +20,7 @@ body {
   font-family: var(--font-primary);
   background: var(--color-bg);
   color: var(--color-text);
-  overflow-x: clip;
+  overflow-x: hidden;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
