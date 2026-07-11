@@ -1157,11 +1157,18 @@ function DomainReel({ reduced }) {
             <span className="mono eyebrow">Domains</span>
             <h3 className="reel-final-line">From pixels to perception.</h3>
             <p className="mono reel-final-sub">five domains · one toolkit</p>
-            <ul className="chips reel-chips">
-              {chips.map((c) => (
-                <li key={c} className="chip">{c}</li>
+            <div className="reel-toolkit">
+              {SKILLS.map((g) => (
+                <div key={g.group} className="reel-tk-group">
+                  <h4 className="mono reel-tk-title">{g.group}</h4>
+                  <ul className="chips reel-chips">
+                    {g.items.map((c) => (
+                      <li key={c} className="chip">{c}</li>
+                    ))}
+                  </ul>
+                </div>
               ))}
-            </ul>
+            </div>
             <ShinyButton onClick={() => goTo("projects")}>
               See it in the work <ArrowRight size={15} />
             </ShinyButton>
@@ -1686,18 +1693,35 @@ html, body { margin: 0; padding: 0; background: #08080b; }
 /* ---- shared scroll-reveal ----
    The wrapper starts hidden and slightly low, then fades + rises into place
    when useReveal() adds .is-in. The per-element transition-delay set inline by
-   <Reveal delay=…> staggers siblings. (This base rule was missing before, so
-   every reveal — About, Experience, Projects, Certs, Contact — popped in with
-   no animation at all.) */
-.reveal {
+   <Reveal delay=…> staggers siblings.
+
+   The selector is ".root .reveal", NOT ".reveal", on purpose. .panel (defined
+   later in this sheet) also sets the transition shorthand; as competing single
+   -class selectors, the later .panel won on every panel that is ALSO a reveal
+   (About, the Experience items, the Certs card), replacing the opacity/transform
+   transition with background/border-only — so those sections SNAPPED in with no
+   animation. Bumping specificity makes the reveal transition win, and we fold
+   the panel's own background/border transition back into the list so theme
+   switching on those panels still animates. */
+.root .reveal {
   opacity: 0;
-  transform: translateY(22px);
+  transform: translateY(24px);
   transition:
     opacity 820ms cubic-bezier(0.16, 1, 0.3, 1),
-    transform 820ms cubic-bezier(0.16, 1, 0.3, 1);
+    transform 820ms cubic-bezier(0.16, 1, 0.3, 1),
+    background 500ms ease,
+    border-color 500ms ease;
   will-change: opacity, transform;
 }
-.reveal.is-in { opacity: 1; transform: none; }
+.root .reveal.is-in { opacity: 1; transform: none; }
+
+/* About is the first thing under the hero, so give it a more deliberate
+   entrance than the default rise: it lifts a little further and settles from a
+   hair of scale, alongside the staggered keyword ignition it already runs.
+   (The .is-in reset below is 4 classes so it beats the base About rule and
+   actually returns to rest.) */
+.root .about-panel.reveal { transform: translateY(40px) scale(0.985); }
+.root .about-panel.reveal.is-in { transform: none; }
 
 /* ---- ambient blobs ---- */
 .blobs {
@@ -2205,7 +2229,7 @@ html, body { margin: 0; padding: 0; background: #08080b; }
   position: absolute; z-index: 4;
   right: clamp(16px, 7vw, 104px); top: 50%;
   transform: translateY(-50%);
-  width: min(430px, 82vw);
+  width: min(540px, 88vw);
   opacity: 0; pointer-events: none; will-change: transform, opacity;
 }
 .reel-final-line {
@@ -2213,8 +2237,27 @@ html, body { margin: 0; padding: 0; background: #08080b; }
   font-weight: 700; letter-spacing: -0.03em; line-height: 1.08;
 }
 .reel-final-sub { margin: 0 0 18px; font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); }
-.reel-chips { margin-bottom: 22px; max-height: 30vh; overflow: hidden; }
-.reel-chips .chip { font-size: 10px; padding: 4px 9px; }
+/* grouped toolkit — the flat wall of ~35 pills is now scannable sections.
+   CSS columns flow the six groups into two balanced columns (break-inside:
+   avoid keeps a group intact), so a viewer can read your strengths by category
+   instead of scanning one undifferentiated blob. */
+.reel-toolkit { columns: 2; column-gap: 26px; margin-bottom: 22px; }
+.reel-tk-group { break-inside: avoid; margin-bottom: 15px; }
+.reel-tk-group:last-child { margin-bottom: 0; }
+.reel-tk-title {
+  margin: 0 0 8px; font-size: 9.5px; letter-spacing: 0.18em;
+  text-transform: uppercase; color: var(--accent); font-weight: 500;
+}
+.reel-chips { gap: 6px; margin: 0; }
+/* the finale chips sit on the bare dark stage with no panel behind them, so
+   the base muted-grey .chip washes out. Full-contrast text + brighter fill +
+   accent-tinted border make each pill legible. Theme-aware via vars. */
+.reel-chips .chip {
+  font-size: 11px; padding: 4.5px 10px; font-weight: 500;
+  color: var(--fg);
+  background: var(--glass-hi);
+  border-color: color-mix(in srgb, var(--accent) 34%, var(--edge));
+}
 
 .reel-rail {
   position: absolute; bottom: 26px; left: 50%; transform: translateX(-50%); z-index: 6;
@@ -2239,7 +2282,16 @@ html, body { margin: 0; padding: 0; background: #08080b; }
   .reel-finale-copy {
     right: 16px; left: 16px; width: auto; top: auto; bottom: 9vh; transform: none; text-align: center;
   }
-  .reel-chips { justify-content: center; max-height: 20vh; }
+  /* on phones the finale is bottom-anchored with little vertical room, so
+     collapse the labeled groups back into one centered, capped chip wall:
+     display:contents dissolves the group/list boxes so every chip becomes a
+     direct flex item, and the labels are hidden. */
+  .reel-toolkit {
+    columns: initial; display: flex; flex-wrap: wrap; justify-content: center;
+    gap: 6px; max-height: 27vh; overflow: hidden; margin-bottom: 18px;
+  }
+  .reel-tk-group, .reel-chips { display: contents; }
+  .reel-tk-title { display: none; }
 }
 
 /* agent graph visual */
@@ -2594,7 +2646,7 @@ html, body { margin: 0; padding: 0; background: #08080b; }
     animation: none !important;
     transition-duration: 1ms !important;
   }
-  .reveal { opacity: 1; transform: none; }
+  .root .reveal, .root .about-panel.reveal { opacity: 1 !important; transform: none !important; }
   .shiny-cta { --gradient-percent: 20%; }
   .shiny-cta::before, .shiny-cta::after { display: none; }
   /* keep scroll-reactive layers still; the progress rail may still track */
