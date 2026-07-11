@@ -2227,33 +2227,40 @@ html, body { margin: 0; padding: 0; background: #08080b; }
 /* finale copy */
 .reel-finale-copy {
   position: absolute; z-index: 4;
-  right: clamp(16px, 7vw, 104px); top: 50%;
-  transform: translateY(-50%);
+  right: clamp(16px, 7vw, 104px);
+  /* Vertically center WITHOUT transform. The old top:50% + translateY(-50%)
+     was clobbered by the JS entrance (which writes transform: translateY(...)
+     inline), so the block was really top-anchored at mid-screen and its bottom
+     — Deep Learning's tail and the CTA — fell off the viewport. top:0 + bottom:0
+     + margin-block:auto centers a max-content-height box with no transform,
+     leaving transform free for the entrance offset. */
+  top: 0; bottom: 0; height: max-content;
+  margin-top: auto; margin-bottom: auto;
   width: min(540px, 88vw);
   opacity: 0; pointer-events: none; will-change: transform, opacity;
 }
 .reel-final-line {
-  margin: 8px 0 10px; font-size: clamp(1.6rem, 3.6vw, 2.5rem);
-  font-weight: 700; letter-spacing: -0.03em; line-height: 1.08;
+  margin: 6px 0 8px; font-size: clamp(1.5rem, 3.4vw, 2.3rem);
+  font-weight: 700; letter-spacing: -0.03em; line-height: 1.06;
 }
-.reel-final-sub { margin: 0 0 18px; font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); }
+.reel-final-sub { margin: 0 0 13px; font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); }
 /* grouped toolkit — the flat wall of ~35 pills is now scannable sections.
    CSS columns flow the six groups into two balanced columns (break-inside:
    avoid keeps a group intact), so a viewer can read your strengths by category
    instead of scanning one undifferentiated blob. */
-.reel-toolkit { columns: 2; column-gap: 26px; margin-bottom: 22px; }
-.reel-tk-group { break-inside: avoid; margin-bottom: 15px; }
+.reel-toolkit { columns: 2; column-gap: 24px; margin-bottom: 16px; }
+.reel-tk-group { break-inside: avoid; margin-bottom: 11px; }
 .reel-tk-group:last-child { margin-bottom: 0; }
 .reel-tk-title {
-  margin: 0 0 8px; font-size: 9.5px; letter-spacing: 0.18em;
+  margin: 0 0 6px; font-size: 9.5px; letter-spacing: 0.18em;
   text-transform: uppercase; color: var(--accent); font-weight: 500;
 }
-.reel-chips { gap: 6px; margin: 0; }
+.reel-chips { gap: 5px; margin: 0; }
 /* the finale chips sit on the bare dark stage with no panel behind them, so
    the base muted-grey .chip washes out. Full-contrast text + brighter fill +
    accent-tinted border make each pill legible. Theme-aware via vars. */
 .reel-chips .chip {
-  font-size: 11px; padding: 4.5px 10px; font-weight: 500;
+  font-size: 10.5px; padding: 4px 9px; font-weight: 500;
   color: var(--fg);
   background: var(--glass-hi);
   border-color: color-mix(in srgb, var(--accent) 34%, var(--edge));
@@ -2280,7 +2287,8 @@ html, body { margin: 0; padding: 0; background: #08080b; }
   .reel-tag { display: none; }
   .reel-counter, .reel-hint { top: 74px; }
   .reel-finale-copy {
-    right: 16px; left: 16px; width: auto; top: auto; bottom: 9vh; transform: none; text-align: center;
+    right: 16px; left: 16px; width: auto; top: auto; bottom: 9vh; height: auto;
+    margin: 0; transform: none; text-align: center;
   }
   /* on phones the finale is bottom-anchored with little vertical room, so
      collapse the labeled groups back into one centered, capped chip wall:
