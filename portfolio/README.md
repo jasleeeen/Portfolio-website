@@ -1,16 +1,42 @@
-# React + Vite
+# Jasleen Kaur Sohal — Portfolio
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Single-page AI/ML portfolio: cursor-parallax glass hero, a scroll-driven
+"fly-through" Domains reel that snaps to each domain, animated ML visuals,
+and a stacked contact section.
 
-Currently, two official plugins are available:
+## Run
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+```bash
+npm install
+npm run dev      # http://localhost:5173
+```
 
-## React Compiler
+## Build
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+```bash
+npm run build    # outputs to dist/
+npm run preview  # preview the production build
+```
 
-## Expanding the ESLint configuration
+Deploy `dist/` anywhere static (Vercel, Netlify, GitHub Pages).
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Where to edit
+
+Everything lives in `src/Portfolio.jsx`:
+
+- **Content** — the data arrays near the top: `LINKS`, `PROJECTS`,
+  `EXPERIENCE`, `SKILLS`, `CERTS`, `CONTACT_CARDS`, `DOMAINS`.
+  Add a project's `liveUrl` to light up its "Live demo" button.
+- **Resume** — replace `public/resume.pdf` with your real PDF
+  (the Résumé button already points at `/resume.pdf`).
+- **Styling** — the big `CSS` template string at the bottom of the file.
+- **Reel pacing** — `TOTAL * 100vh` (wrapper height) is overall speed;
+  the `2.1` / `2.35` exponents in the reel's animation loop control how
+  fast domains fly toward the camera; `150` (ms) is the idle-snap delay.
+
+## Notes
+
+- `public/resume.pdf` here is a placeholder — swap in your own.
+- Requires a modern browser (uses `backdrop-filter`, CSS `@property`,
+  `overflow: clip`). Motion is disabled automatically for users with
+  "reduce motion" enabled.
