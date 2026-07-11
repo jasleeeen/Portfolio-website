@@ -907,44 +907,64 @@ function DomainReel({ reduced }) {
       const p = total > 0 ? clamp(-r.top / total, 0, 1) : 0;
       const cam = p * (TOTAL - 1); // camera position in scene units
 
+      // Cached writes: only touch el.style when the value actually changed.
+      // Rewriting an identical transform/opacity string every frame still makes
+      // the browser recompute style for that element, so skipping no-op writes
+      // meaningfully cuts per-frame cost. Cache lives on the DOM node (_ro/_rt/
+      // _rpe) so it survives React re-registering the refs on re-render.
+      const setOT = (el, o, t) => {
+        const os = o.toFixed(3);
+        if (os !== el._ro) { el.style.opacity = os; el._ro = os; }
+        if (t !== el._rt) { el.style.transform = t; el._rt = t; }
+      };
+
       for (const it of items.current) {
-        const d = cam - it.scene;
         const el = it.el;
-        if (Math.abs(d) > 1.35) { el.style.opacity = 0; continue; }
+        const d = cam - it.scene;
+        if (Math.abs(d) > 1.35) {
+          if (el._ro !== "0.000") { el.style.opacity = "0.000"; el._ro = "0.000"; }
+          continue;
+        }
 
         if (it.kind === "word") {
+          // NOTE: the per-frame filter:blur() was removed. A blur filter is a
+          // full repaint of the element every frame it changes — brutal on the
+          // giant heading text. The dolly-zoom still reads through scale+fade.
           const vis = ramp(d, -1.05, -0.45) * (1 - ramp(d, 0.18, 0.72));
           const s = Math.pow(2.1, d);
-          const blur = d < -0.45 ? (-d - 0.45) * 9 : d > 0.22 ? (d - 0.22) * 15 : 0;
-          el.style.opacity = vis.toFixed(3);
-          el.style.transform =
-            `translate(-50%,-50%) translateY(${(-d * 42).toFixed(1)}px) scale(${s.toFixed(3)})`;
-          el.style.filter = blur > 0.3 ? `blur(${blur.toFixed(1)}px)` : "none";
+          setOT(
+            el,
+            vis,
+            `translate(-50%,-50%) translateY(${(-d * 42).toFixed(1)}px) scale(${s.toFixed(3)})`
+          );
         } else if (it.kind === "card") {
           const vis = ramp(d, -0.95, -0.42) * (1 - ramp(d, 0.3, 0.82));
           const s = clamp(Math.pow(2.35, d) * it.k, 0, 2.3);
           const spread = 1 + Math.max(d, 0) * 2.4; // fly outward past the camera
           const x = it.bx * px * (0.3 + 0.7 * s) * spread;
           const y = it.by * px * (0.3 + 0.7 * s) * spread - d * 26;
-          el.style.opacity = vis.toFixed(3);
-          el.style.transform =
-            `translate(-50%,-50%) translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0) rotate(${it.r}deg) scale(${s.toFixed(3)})`;
+          setOT(
+            el,
+            vis,
+            `translate(-50%,-50%) translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0) rotate(${it.r}deg) scale(${s.toFixed(3)})`
+          );
         } else if (it.kind === "tag") {
-          const vis = ramp(d, -0.85, -0.4) * (1 - ramp(d, 0.2, 0.6));
-          el.style.opacity = (vis * 0.6).toFixed(3);
-          el.style.transform = `translateY(${(-d * 70).toFixed(1)}px)`;
+          const vis = ramp(d, -0.85, -0.4) * (1 - ramp(d, 0.2, 0.6)) * 0.6;
+          setOT(el, vis, `translateY(${(-d * 70).toFixed(1)}px)`);
         } else if (it.kind === "deck") {
           const near = 1 - clamp(Math.abs(d) * 1.5, 0, 1);
           const fan = it.di - (SCENES - 1) / 2;
           const s = 0.82 * Math.pow(2.1, Math.min(d, 0));
-          el.style.opacity = ramp(d, -0.85, -0.3).toFixed(3);
-          el.style.transform =
-            `translate(-50%,-50%) translate3d(${(fan * 36 * near).toFixed(1)}px, ${(-d * 60).toFixed(1)}px, 0) rotate(${(fan * 7 * near).toFixed(2)}deg) scale(${s.toFixed(3)})`;
+          setOT(
+            el,
+            ramp(d, -0.85, -0.3),
+            `translate(-50%,-50%) translate3d(${(fan * 36 * near).toFixed(1)}px, ${(-d * 60).toFixed(1)}px, 0) rotate(${(fan * 7 * near).toFixed(2)}deg) scale(${s.toFixed(3)})`
+          );
         } else if (it.kind === "fin") {
           const vis = ramp(d, -0.55, -0.12);
-          el.style.opacity = vis.toFixed(3);
-          el.style.transform = `translateY(${((1 - vis) * 34).toFixed(1)}px)`;
-          el.style.pointerEvents = vis > 0.6 ? "auto" : "none";
+          setOT(el, vis, `translateY(${((1 - vis) * 34).toFixed(1)}px)`);
+          const pe = vis > 0.6 ? "auto" : "none";
+          if (pe !== el._rpe) { el.style.pointerEvents = pe; el._rpe = pe; }
         }
       }
 
@@ -1682,11 +1702,11 @@ html, body { margin: 0; padding: 0; background: #08080b; }
 /* ---- ambient blobs ---- */
 .blobs {
   position: fixed; inset: -20vh 0; z-index: 0; pointer-events: none; overflow: hidden;
-  /* gentle scroll parallax — translate only (cheap: the blurred layers are
-     cached textures; no re-blur, unlike the old scale effect).
-     The layer is oversized (-20vh top/bottom) so the shift never exposes its edge. */
-  transform: translate3d(0, calc(var(--sp, 0) * -16vh), 0);
-  transition: transform 200ms ease-out;
+  /* The scroll-driven parallax transform was removed. This layer uses
+     mix-blend-mode, so translating it on every scroll frame forced the browser
+     to recomposite the blend across the whole viewport each frame — a site-wide
+     scroll-jank source, felt on every section, not just the reel. The wander
+     animations below keep the field alive without reacting to scroll. */
 }
 .blob {
   position: absolute; border-radius: 999px; display: block;
@@ -2131,7 +2151,7 @@ html, body { margin: 0; padding: 0; background: #08080b; }
   position: absolute; left: 50%; top: 50%; z-index: 2;
   transform: translate(-50%, -50%);
   text-align: center; width: 92vw;
-  opacity: 0; will-change: transform, opacity, filter;
+  opacity: 0; will-change: transform, opacity;
 }
 .reel-word {
   margin: 0; text-transform: uppercase;
@@ -2152,14 +2172,21 @@ html, body { margin: 0; padding: 0; background: #08080b; }
   position: absolute; left: 50%; top: 50%; z-index: 3;
   width: clamp(150px, 15vw, 224px); aspect-ratio: 1;
   border-radius: 24px; overflow: hidden;
-  background: linear-gradient(150deg, rgba(255,255,255,0.06), rgba(14,14,20,0.34) 60%);
+  /* Opaque fill instead of backdrop-filter. A backdrop blur on an element that
+     translates/scales every frame forces a full re-sample of the background on
+     each frame per card — the dominant source of reel jank. A solid translucent
+     gradient reads almost identically and lets each card composite as a cheap
+     pre-rasterized layer that just moves. */
+  background: linear-gradient(150deg, rgba(34,34,46,0.72), rgba(10,10,16,0.82) 60%);
   border: 1px solid rgba(255,255,255,0.14);
   border-top-color: rgba(255,255,255,0.32);
   box-shadow: var(--shadow);
-  backdrop-filter: blur(5px) saturate(150%);
-  -webkit-backdrop-filter: blur(5px) saturate(150%);
   display: grid; place-items: center;
   opacity: 0; will-change: transform, opacity;
+}
+.theme-light .reel-card {
+  background: linear-gradient(150deg, rgba(255,255,255,0.92), rgba(230,230,240,0.86) 60%);
+  border-top-color: rgba(255,255,255,0.9);
 }
 .reel-card-inner { width: 78%; height: 78%; display: grid; place-items: center; }
 .reel-card.deck { width: clamp(160px, 17vw, 232px); }
