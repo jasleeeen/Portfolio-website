@@ -93,7 +93,7 @@ const PROJECTS = [
 
 const EXPERIENCE = [
   {
-    role: "Machine Learning Intern",
+    role: "Intern",
     org: "Auriga IT Consulting, Jaipur",
     when: "Jun 2026 — Present",
     points: [
@@ -103,7 +103,7 @@ const EXPERIENCE = [
     ],
   },
   {
-    role: ".NET with Azure — Fellow",
+    role: ".NET with Azure",
     org: "Capgemini Exceller Edge Fellowship",
     when: "Jan — May 2026",
     points: [
@@ -112,7 +112,7 @@ const EXPERIENCE = [
     ],
   },
   {
-    role: "Python with Data Science — Trainee",
+    role: "Python with Data Science",
     org: "Auribises Technologies, Ludhiana",
     when: "Jun — Jul 2024",
     points: [
@@ -211,16 +211,17 @@ const DOMAINS = [
 // it scales up and its offset grows, so cards spread outward past the viewer —
 // the radial "flying through floating panels" motion. bx/by = offset, r = tilt.
 const CARD_SLOTS = [
-  { bx: -285, by: -120, r: -6 },
-  { bx: 300, by: 44, r: 5 },
-  { bx: -170, by: 205, r: 7 },
+  { bx: -340, by: -132, r: -6 },
+  { bx: 352, by: 48, r: 5 },
+  { bx: -215, by: 224, r: 7 },
 ];
 
-// vh of page height consumed per scene in the reel. The visual timing lives in
-// scene-units (d = cam - scene) and is fully independent of this number, so
-// lowering it only shortens how far you have to scroll to advance — not the
-// animation. 100 was the original (a full viewport per scene → felt endless).
-const SCENE_VH = 58;
+// How far you scroll to advance one scene, as a fraction of the (stable) stage
+// height. The reel is sized in PIXELS from this at runtime, so every scene costs
+// the same fraction of the screen on every device and orientation — no more
+// "sometimes a flick, sometimes a whole screen". Lower = less scrolling per
+// scene. The visual timing (d = cam - scene) is independent of this.
+const SCENE_STEP = 0.4;
 
 /* ------------------------------------------------------------------ */
 /* hooks                                                               */
@@ -897,27 +898,54 @@ function DomainReel({ reduced }) {
     const ramp = (v, a, b) => clamp((v - a) / (b - a), 0, 1);
     let raf = 0;
 
-    const run = () => {
-      raf = 0;
+    // Damped virtual camera. Rather than pin the fly-through to the raw scroll
+    // position 1:1 (only as smooth as the wheel/trackpad steps feeding it), we
+    // ease a virtual camera toward the scroll target each frame. The smoothing
+    // is time-based, so it feels identical on 60Hz and 120Hz and turns coarse
+    // scroll input into liquid motion.
+    let targetCam = 0;  // where scroll says the camera should be
+    let smoothCam = 0;  // where it actually is this frame (eased)
+    let px = 1;         // slot-offset scale for narrow screens
+    let lastT = 0;
+    let stepPx = 0;     // scroll distance (px) that advances one scene
+    let totalPx = 0;    // total scrollable distance through the reel
+    const TAU = 80;     // ms; lower = tighter/snappier, higher = floatier
+
+    // Size the reel in PIXELS off the sticky stage's own height. The stage is
+    // 100svh, which is STABLE — unlike window.innerHeight, which jumps as the
+    // mobile URL bar shows/hides. Previously the wrapper used vh, the stage used
+    // svh, and progress used innerHeight: three different heights, so scroll-
+    // per-scene drifted with the URL bar and varied wildly across devices and
+    // orientations. Now one scene is exactly SCENE_STEP of the stage, always.
+    const layout = () => {
+      const stageH = stageRef.current
+        ? stageRef.current.getBoundingClientRect().height
+        : window.innerHeight;
+      stepPx = Math.max(1, Math.round(stageH * SCENE_STEP));
+      totalPx = stepPx * (TOTAL - 1);
+      wrap.style.height = stageH + totalPx + "px";
+    };
+
+    // scroll position -> targetCam, using the stable totalPx
+    const readTarget = () => {
       const r = wrap.getBoundingClientRect();
-      const vh = window.innerHeight;
-      const vw = window.innerWidth;
-      const px = Math.min(1, vw / 1240); // shrink slot offsets on narrow screens
-      const total = r.height - vh;
-      const p = total > 0 ? clamp(-r.top / total, 0, 1) : 0;
-      const cam = p * (TOTAL - 1); // camera position in scene units
+      px = Math.min(1, window.innerWidth / 1240);
+      const p = totalPx > 0 ? clamp(-r.top / totalPx, 0, 1) : 0;
+      targetCam = p * (TOTAL - 1);
+    };
 
-      // Cached writes: only touch el.style when the value actually changed.
-      // Rewriting an identical transform/opacity string every frame still makes
-      // the browser recompute style for that element, so skipping no-op writes
-      // meaningfully cuts per-frame cost. Cache lives on the DOM node (_ro/_rt/
-      // _rpe) so it survives React re-registering the refs on re-render.
-      const setOT = (el, o, t) => {
-        const os = o.toFixed(3);
-        if (os !== el._ro) { el.style.opacity = os; el._ro = os; }
-        if (t !== el._rt) { el.style.transform = t; el._rt = t; }
-      };
+    // Cached writes: only touch el.style when the value actually changed, so
+    // unchanged frames don't invalidate style/paint. Cache lives on the DOM
+    // node so it survives React re-registering refs on re-render.
+    const setOT = (el, o, t) => {
+      const os = o.toFixed(3);
+      if (os !== el._ro) { el.style.opacity = os; el._ro = os; }
+      if (t !== el._rt) { el.style.transform = t; el._rt = t; }
+    };
 
+    // paint everything from the current (eased) smoothCam
+    const render = () => {
+      const cam = smoothCam;
       for (const it of items.current) {
         const el = it.el;
         const d = cam - it.scene;
@@ -968,15 +996,32 @@ function DomainReel({ reduced }) {
         }
       }
 
+      const p = TOTAL > 1 ? cam / (TOTAL - 1) : 0;
       if (horizonRef.current)
         horizonRef.current.style.opacity = (0.16 + p * 0.55).toFixed(3);
       if (railRef.current)
         railRef.current.style.transform = `scaleX(${clamp(cam / SCENES, 0, 1).toFixed(4)})`;
       if (counterRef.current) {
         const idx = clamp(Math.round(cam) + 1, 1, SCENES);
-        counterRef.current.textContent =
-          String(idx).padStart(2, "0") + " / " + String(SCENES).padStart(2, "0");
+        const txt = String(idx).padStart(2, "0") + " / " + String(SCENES).padStart(2, "0");
+        if (txt !== counterRef.current._t) { counterRef.current.textContent = txt; counterRef.current._t = txt; }
       }
+    };
+
+    // The smoothing loop: ease smoothCam toward targetCam with time-based
+    // exponential smoothing (framerate-independent), then park itself once
+    // caught up so we don't burn frames when nothing is moving.
+    const frame = (now) => {
+      const dt = Math.min(now - lastT, 50);
+      lastT = now;
+      const k = 1 - Math.exp(-dt / TAU);
+      smoothCam += (targetCam - smoothCam) * k;
+      if (Math.abs(targetCam - smoothCam) < 0.0006) smoothCam = targetCam;
+      render();
+      raf = smoothCam === targetCam ? 0 : requestAnimationFrame(frame);
+    };
+    const ensureAnim = () => {
+      if (!raf) { lastT = performance.now(); raf = requestAnimationFrame(frame); }
     };
 
     // --- idle snap: when scrolling rests between two scenes, glide to the
@@ -1003,6 +1048,8 @@ function DomainReel({ reduced }) {
       const step = (now) => {
         const t = Math.min((now - t0) / dur, 1);
         window.scrollTo(0, startY + dist * ease(t));
+        readTarget();
+        ensureAnim();
         if (t < 1) snapRaf = requestAnimationFrame(step);
         else { snapping = false; snapRaf = 0; }
       };
@@ -1010,25 +1057,20 @@ function DomainReel({ reduced }) {
     };
 
     const maybeSnap = () => {
+      if (totalPx <= 0) return;
       const r = wrap.getBoundingClientRect();
-      const vh = window.innerHeight;
-      const total = r.height - vh;
-      if (total <= 0) return;
-      const p = -r.top / total;
+      const p = -r.top / totalPx;
       if (p <= 0.001 || p >= 0.999) return; // outside the reel — leave scroll alone
       const cam = p * (TOTAL - 1);
       const nearest = Math.round(cam);
       if (Math.abs(cam - nearest) < 0.02) return; // already on a chapter
-      // Land the camera exactly on scene `nearest`. cam = p*(TOTAL-1) and
-      // p = (scrollY - wrapTop)/total, so the scrollY that puts cam == nearest
-      // is wrapTop + (nearest/(TOTAL-1)) * total. This is spacing-independent,
-      // so it stays correct no matter what SCENE_VH is set to.
       const wrapTop = window.scrollY + r.top;
-      snapTo(wrapTop + (nearest / (TOTAL - 1)) * total);
+      snapTo(wrapTop + (nearest / (TOTAL - 1)) * totalPx);
     };
 
     const onScroll = () => {
-      if (!raf) raf = requestAnimationFrame(run);
+      readTarget();
+      ensureAnim();
       if (!snapping) {
         clearTimeout(idleT);
         idleT = setTimeout(maybeSnap, 150);
@@ -1040,15 +1082,30 @@ function DomainReel({ reduced }) {
       clearTimeout(idleT);
       idleT = setTimeout(maybeSnap, 150);
     };
-    run();
+    // re-measure on real viewport changes (rotation, resize). A URL-bar toggle
+    // fires resize too, but stageH (svh) is unchanged, so layout() is a no-op.
+    const onResize = () => {
+      layout();
+      readTarget();
+      ensureAnim();
+    };
+
+    // init: size the reel, then land on target with no easing on first paint
+    layout();
+    readTarget();
+    smoothCam = targetCam;
+    render();
+
     window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onScroll);
+    window.addEventListener("resize", onResize);
+    window.addEventListener("orientationchange", onResize);
     window.addEventListener("wheel", onInput, { passive: true });
     window.addEventListener("touchstart", onInput, { passive: true });
     window.addEventListener("keydown", onInput);
     return () => {
       window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onScroll);
+      window.removeEventListener("resize", onResize);
+      window.removeEventListener("orientationchange", onResize);
       window.removeEventListener("wheel", onInput);
       window.removeEventListener("touchstart", onInput);
       window.removeEventListener("keydown", onInput);
@@ -1089,7 +1146,7 @@ function DomainReel({ reduced }) {
       className="reel-wrap"
       id="domains"
       ref={wrapRef}
-      style={{ height: `${TOTAL * SCENE_VH}vh` }}
+      style={{ height: `${((1 + (TOTAL - 1) * SCENE_STEP) * 100).toFixed(0)}svh` }}
     >
       <div className="reel-stage" ref={stageRef}>
         <div className="reel-horizon" ref={horizonRef} aria-hidden="true" />
