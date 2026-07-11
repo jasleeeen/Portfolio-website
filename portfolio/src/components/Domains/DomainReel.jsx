@@ -1,5 +1,8 @@
 import "./DomainReel.css";
 
+import { useRef } from "react";
+import { motion, useScroll, useTransform } from "framer-motion";
+
 import domains from "../../data/domains";
 
 import Scene from "./Scene";
@@ -12,6 +15,21 @@ export default function DomainReel() {
 
     useLenis();
 
+    const reelRef = useRef(null);
+
+    // real progress through the domains section
+    const { scrollYProgress } = useScroll({
+        target: reelRef,
+        offset: ["start 0.7", "end 0.7"],
+    });
+
+    // the rail only shows while you're actually inside the section
+    const railOpacity = useTransform(
+        scrollYProgress,
+        [0, 0.03, 0.97, 1],
+        [0, 1, 1, 0]
+    );
+
     return (
 
         <>
@@ -21,19 +39,24 @@ export default function DomainReel() {
             <section
                 id="domains"
                 className="domain-reel"
+                ref={reelRef}
             >
 
-                <div className="domain-progress">
+                <motion.div
+                    className="domain-progress"
+                    style={{ opacity: railOpacity }}
+                >
 
-                    <span></span>
+                    <motion.span style={{ scaleY: scrollYProgress }}></motion.span>
 
-                </div>
+                </motion.div>
 
-                {domains.map((domain)=>(
+                {domains.map((domain, index)=>(
 
                     <Scene
                         key={domain.id}
                         domain={domain}
+                        index={index}
                     />
 
                 ))}

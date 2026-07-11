@@ -1,16 +1,25 @@
+import { useRef } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import "./EnterLab.css";
 
 export default function EnterLab() {
-  const { scrollYProgress } = useScroll();
+  const ref = useRef(null);
 
-  const scale = useTransform(scrollYProgress, [0.12, 0.2], [1, 2.8]);
-  const opacity = useTransform(scrollYProgress, [0.12, 0.19], [1, 0]);
+  // progress is scoped to this section (0 = pinned at top, 1 = scrolled past),
+  // so the zoom-through fires at the right moment no matter how long the page is
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ["start start", "end start"],
+  });
 
-  const rotate = useTransform(scrollYProgress, [0.12, 0.2], [0, 90]);
+  const scale = useTransform(scrollYProgress, [0, 0.85], [1, 2.8]);
+  const opacity = useTransform(scrollYProgress, [0, 0.7], [1, 0]);
+  const rotate = useTransform(scrollYProgress, [0, 0.85], [0, 90]);
+  const blur = useTransform(scrollYProgress, [0, 0.7], [0, 10]);
+  const filter = useTransform(blur, (b) => `blur(${b}px)`);
 
   return (
-    <section className="enter-lab">
+    <section className="enter-lab" ref={ref}>
 
       <motion.div
         className="enter-particle-core"
@@ -25,6 +34,7 @@ export default function EnterLab() {
         className="enter-content"
         style={{
           opacity,
+          filter,
         }}
       >
 
